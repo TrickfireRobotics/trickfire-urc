@@ -93,11 +93,7 @@
         "/opt/ros/jazzy/local/lib/python3.10/dist-packages",
         ".github"
     ],
-    "python.analysis.exclude": [
-        "./build",
-        "./install",
-        "./log"
-    ],
+    "python.analysis.exclude": ["./build", "./install", "./log"],
     "python.defaultInterpreterPath": "python3",
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
