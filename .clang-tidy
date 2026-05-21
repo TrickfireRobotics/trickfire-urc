@@ -1,0 +1,42 @@
+---
+# clang-tidy configuration for the Viator Rover workspace.
+# Run by CI (build-and-test job) against compile_commands.json produced by
+# colcon build. We start in "soft launch" mode (WarningsAsErrors empty) so
+# we can land the workflow without first cleaning every existing finding.
+
+Checks: >
+  bugprone-*,
+  cert-*,
+  cppcoreguidelines-*,
+  google-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -misc-non-private-member-variables-in-classes,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-type-vararg,
+  -google-runtime-references,
+  -readability-named-parameter,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -bugprone-easily-swappable-parameters
+
+# CRITICAL: without this regex clang-tidy follows #includes into every
+# header under /opt/ros (MoveIt2, Nav2, rclcpp, ...) and runs for 20–30
+# minutes producing warnings on code we do not own. Restrict header
+# analysis to our own package source trees.
+HeaderFilterRegex: 'src/viator_.*'
+
+# Soft launch — diagnostics only, do not fail CI on tidy findings yet.
+# Switch this to a non-empty value (e.g. '*') once the existing codebase
+# is clean.
+WarningsAsErrors: ''
+
+# Use the project .clang-format for any -fix suggestions clang-tidy makes.
+FormatStyle: file

@@ -1,0 +1,8 @@
+---
+# C++ style for the Viator Rover workspace. Applied by clang-format-18 in
+# CI (lint-cpp job) and locally via the pre-commit hook (see README).
+BasedOnStyle: Google
+IndentWidth: 2
+ColumnLimit: 100
+PointerAlignment: Left
+NamespaceIndentation: None

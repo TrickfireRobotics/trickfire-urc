@@ -1,0 +1,202 @@
+name: CI
+
+# Quoted because YAML 1.1 parses bare `on` as the boolean True; some
+# linters reject the unquoted form even though GitHub accepts it.
+"on":
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+env:
+  ROS_DISTRO: jazzy
+  # Fast DDS has intermittent discovery failures inside GitHub Actions
+  # containers; Cyclone DDS is significantly more reliable for CI.
+  RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+  # Keep DDS traffic on loopback so parallel runners on the same network
+  # segment cannot accidentally discover each other's nodes.
+  ROS_LOCALHOST_ONLY: "1"
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  # ----------------------------------------------------------------------
+  # Job 1: Python lint. Runs on bare ubuntu — no ROS or container needed,
+  # so it starts fast and gives quick PR feedback.
+  # ----------------------------------------------------------------------
+  lint-python:
+    name: Lint Python (ruff)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"  # matches Jazzy's system Python
+
+      - name: Install ruff
+        # Pinned for reproducibility. Bump deliberately in its own PR so a
+        # ruff release cannot silently turn green CI red overnight.
+        run: pip install ruff==0.6.9
+
+      - name: ruff format --check
+        run: ruff format --check src/
+
+      - name: ruff check
+        # --output-format=github emits ::error annotations so violations
+        # appear inline on the PR diff view.
+        run: ruff check src/ --output-format=github
+
+  # ----------------------------------------------------------------------
+  # Job 2: C++ formatting. Uses the ROS image only because we want the
+  # same clang-format-18 binary the build job uses; we do not source ROS.
+  # ----------------------------------------------------------------------
+  lint-cpp:
+    name: Lint C++ (clang-format)
+    runs-on: ubuntu-24.04
+    container:
+      image: ros:jazzy-ros-base
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format-18
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends clang-format-18
+          # Ubuntu installs versioned binaries; symlink so the .clang-format
+          # tooling discovery (and humans running it locally) find plain
+          # `clang-format`.
+          update-alternatives --install /usr/bin/clang-format clang-format \
+            /usr/bin/clang-format-18 100
+
+      - name: Check C++ formatting
+        shell: bash
+        run: |
+          find src \
+            -path '*/zed-ros2-wrapper' -prune -o \
+            -type f \( -name '*.hpp' -o -name '*.h' \
+                    -o -name '*.cpp' -o -name '*.cc' \) \
+            -print0 \
+            | xargs -0 -r clang-format --dry-run --Werror
+
+  # ----------------------------------------------------------------------
+  # Job 3: full colcon build + tests + clang-tidy.
+  # ----------------------------------------------------------------------
+  build-and-test:
+    name: Build & Test (colcon)
+    runs-on: ubuntu-24.04
+    container:
+      image: ros:jazzy-ros-base
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tooling
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential \
+            python3-colcon-common-extensions \
+            python3-vcstool \
+            python3-rosdep \
+            clang-tidy-18 \
+            jq \
+            ros-jazzy-rmw-cyclonedds-cpp
+            # ^ the ros-base image ships Fast DDS only; we use Cyclone (see env).
+          update-alternatives --install /usr/bin/clang-tidy clang-tidy \
+            /usr/bin/clang-tidy-18 100
+
+      - name: Cache apt archives
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-${{ runner.os }}-${{ hashFiles('src/**/package.xml', 'viator.repos') }}
+          restore-keys: |
+            apt-${{ runner.os }}-
+
+      - name: Import upstream repos (vcstool)
+        shell: bash
+        run: |
+          # Pulls zed-ros2-interfaces (msgs only, no SDK dep) plus any
+          # other forks pinned in viator.repos.
+          vcs import src < viator.repos
+
+      - name: Exclude ZED wrapper from the build
+        shell: bash
+        run: |
+          # The full ZED ROS2 wrapper requires the proprietary ZED SDK,
+          # which is not installable in CI. COLCON_IGNORE skips the dir;
+          # any packages that depend on zed_msgs are unblocked because
+          # zed-ros2-interfaces was imported above.
+          if [ -d src/zed-ros2-wrapper ]; then
+            touch src/zed-ros2-wrapper/COLCON_IGNORE
+          fi
+
+      - name: rosdep install
+        shell: bash
+        run: |
+          # Each step starts a fresh shell — re-source ROS every time.
+          source /opt/ros/jazzy/setup.bash
+          rosdep update --rosdistro jazzy
+          # --skip-keys, by entry:
+          #   fastcdr                    — DDS impl we do not use (we use Cyclone)
+          #   rti-connext-dds-6.0.1      — RTI Connext, not installed in CI
+          #   urdfdom_headers            — supplied transitively; rosdep DB lags
+          #   zed_components, zed_wrapper — ZED SDK packages excluded above
+          # Keep this list in sync with reality — stale skip-keys hide real
+          # missing-dep errors.
+          rosdep install --from-paths src --ignore-src -r -y \
+            --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers zed_components zed_wrapper"
+
+      - name: colcon build
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          # CMAKE_EXPORT_COMPILE_COMMANDS produces compile_commands.json
+          # in each package's build dir — required input for clang-tidy below.
+          colcon build \
+            --event-handlers console_cohesion+ \
+            --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: clang-tidy
+        shell: bash
+        run: |
+          # We deliberately do not source ROS here; clang-tidy reads
+          # compile_commands.json which has absolute include paths already.
+          shopt -s nullglob
+          status=0
+          for cc in build/*/compile_commands.json; do
+            pkg=$(basename "$(dirname "$cc")")
+            # jq -> list of TUs; drop anything from /opt/ros (system headers)
+            # and anything under /build/ (generated message code), and keep
+            # only files inside our src/viator_* packages.
+            files=$(jq -r '.[].file' "$cc" \
+              | grep -v '^/opt/ros' \
+              | grep -v '/build/' \
+              | grep -E '/src/viator_' || true)
+            if [ -n "$files" ]; then
+              echo "::group::clang-tidy $pkg"
+              echo "$files" | xargs -r clang-tidy -p "build/$pkg" || status=$?
+              echo "::endgroup::"
+            fi
+          done
+          exit $status
+
+      - name: colcon test
+        shell: bash
+        run: |
+          source install/setup.bash
+          # --return-code-on-test-failure: without it, colcon test exits 0
+          # even when individual tests fail (it only fails on infra errors).
+          # --maxfail caps noisy pytest output once things are clearly broken.
+          colcon test \
+            --return-code-on-test-failure \
+            --event-handlers console_cohesion+ \
+            --pytest-args "--maxfail=5"
+
+      - name: colcon test-result
+        # Always run so the test summary is visible even when colcon test
+        # exited non-zero above.
+        if: always()
+        shell: bash
+        run: colcon test-result --verbose

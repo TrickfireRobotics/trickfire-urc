@@ -1,0 +1,42 @@
+# Ruff configuration for the Viator Rover ROS2 workspace.
+# Mirrored by the lint-python CI job — when bumping settings here, also
+# update the pinned ruff version in .github/workflows/ci.yml.
+
+[tool.ruff]
+# Jazzy ships Python 3.12 on Ubuntu 24.04.
+target-version = "py312"
+line-length = 100
+
+# Skip generated and vendored trees. zed-ros2-wrapper is upstream code we
+# do not style-police.
+extend-exclude = [
+    "build",
+    "install",
+    "log",
+    "src/zed-ros2-wrapper",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "RUF",  # ruff-specific rules
+]
+ignore = [
+    # The formatter handles wrapping; E501 fires on lines the formatter
+    # deliberately leaves long (URLs, no-good-break-points).
+    "E501",
+    # `def cb(self, msg, qos=QoSProfile(depth=10))` is the canonical rclpy
+    # pattern. B008 would flag every callback.
+    "B008",
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+line-ending = "lf"
