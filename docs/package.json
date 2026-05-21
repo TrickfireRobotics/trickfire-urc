@@ -1,0 +1,19 @@
+{
+    "name": "trickfire-urc-docs",
+    "type": "module",
+    "scripts": {
+        "dev": "astro dev",
+        "build": "astro build",
+        "preview": "astro preview",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "dependencies": {
+        "@astrojs/starlight": "^0.38.3",
+        "astro": "^6.1.7"
+    },
+    "devDependencies": {
+        "prettier": "^3.5.3",
+        "prettier-plugin-astro": "^0.14.1"
+    }
+}
