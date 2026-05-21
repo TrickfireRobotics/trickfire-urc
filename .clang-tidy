@@ -30,8 +30,10 @@ Checks: >
 # CRITICAL: without this regex clang-tidy follows #includes into every
 # header under /opt/ros (MoveIt2, Nav2, rclcpp, ...) and runs for 20–30
 # minutes producing warnings on code we do not own. Restrict header
-# analysis to our own package source trees.
-HeaderFilterRegex: 'src/viator_.*'
+# analysis to anything under src/ — the CI clang-tidy step further limits
+# which packages are actually fed to clang-tidy (only ones tracked in
+# this repo, not vcs-imported upstream code).
+HeaderFilterRegex: 'src/.*'
 
 # Soft launch — diagnostics only, do not fail CI on tidy findings yet.
 # Switch this to a non-empty value (e.g. '*') once the existing codebase

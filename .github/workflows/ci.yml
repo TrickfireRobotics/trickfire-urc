@@ -110,7 +110,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /var/cache/apt/archives
-          key: apt-${{ runner.os }}-${{ hashFiles('src/**/package.xml', 'viator.repos') }}
+          key: apt-${{ runner.os }}-${{ hashFiles('src/**/package.xml', 'repos') }}
           restore-keys: |
             apt-${{ runner.os }}-
 
@@ -118,8 +118,8 @@ jobs:
         shell: bash
         run: |
           # Pulls zed-ros2-interfaces (msgs only, no SDK dep) plus any
-          # other forks pinned in viator.repos.
-          vcs import src < viator.repos
+          # other forks pinned in the repos file at the repo root.
+          vcs import src < repos
 
       - name: Exclude ZED wrapper from the build
         shell: bash
@@ -163,17 +163,32 @@ jobs:
         run: |
           # We deliberately do not source ROS here; clang-tidy reads
           # compile_commands.json which has absolute include paths already.
+
+          # First-party packages = subdirs of src/ committed to this repo.
+          # Anything pulled in by `vcs import` (zed-ros2-interfaces, ublox
+          # forks, etc.) is not in the git index, so it's skipped — we do
+          # not lint upstream code.
+          mapfile -t first_party < <(git -C "$GITHUB_WORKSPACE" \
+            ls-tree -d --name-only HEAD src/ 2>/dev/null)
+          if [ ${#first_party[@]} -eq 0 ]; then
+            echo "No first-party packages tracked under src/; skipping clang-tidy."
+            exit 0
+          fi
+          # Build a regex like /src/(pkg_a|pkg_b)/ from the tracked dirs.
+          stripped=("${first_party[@]#src/}")
+          filter_re="/src/($(IFS='|'; echo "${stripped[*]}"))/"
+
           shopt -s nullglob
           status=0
           for cc in build/*/compile_commands.json; do
             pkg=$(basename "$(dirname "$cc")")
             # jq -> list of TUs; drop anything from /opt/ros (system headers)
-            # and anything under /build/ (generated message code), and keep
-            # only files inside our src/viator_* packages.
+            # and anything under /build/ (generated message code), then
+            # keep only files in first-party package dirs.
             files=$(jq -r '.[].file' "$cc" \
               | grep -v '^/opt/ros' \
               | grep -v '/build/' \
-              | grep -E '/src/viator_' || true)
+              | grep -E "$filter_re" || true)
             if [ -n "$files" ]; then
               echo "::group::clang-tidy $pkg"
               echo "$files" | xargs -r clang-tidy -p "build/$pkg" || status=$?
