@@ -1,0 +1,28 @@
+{
+    "context": "../",
+    "dockerFile": "Dockerfile",
+    "containerUser": "trickfire",
+    "remoteUser": "trickfire",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/trickfire/${localWorkspaceFolderBasename},type=bind",
+    "workspaceFolder": "/home/trickfire/${localWorkspaceFolderBasename}",
+    "runArgs": [
+        "--cap-add=SYS_PTRACE",
+        "--security-opt", 
+        "seccomp=unconfined"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.pylance",
+                "charliermarsh.ruff",
+                "ms-vscode.cpptools" //includes Clang
+            ]
+        },
+        "settings": {
+        "python.analysis.extraPaths": [
+          "/opt/ros/jazzy/lib/python3.12/site-packages"
+        ]
+        }
+    }
+}
