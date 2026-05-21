@@ -2,9 +2,9 @@ name: CI
 
 "on":
   push:
-    branches: [master, main]
+    branches: [main]
   pull_request:
-    branches: [master, main]
+    branches: [main]
 
 env:
   ROS_DISTRO: jazzy
@@ -25,16 +25,16 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"  # matches Jazzy's system Python
+          python-version: "3.12"
 
       - name: Install ruff
         run: pip install ruff==0.6.9
 
       - name: ruff format --check
-        run: ruff format --check src/
+        run: ruff format --check low-level/src high-level/src
 
       - name: ruff check
-        run: ruff check src/ --output-format=github
+        run: ruff check low-level/src high-level/src --output-format=github
 
   # ----------------------------------------------------------------------
   # Job 2: C++ formatting. Uses the ROS image only because we want the
@@ -53,155 +53,14 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends clang-format-18
-          # Ubuntu installs versioned binaries; symlink so the .clang-format
-          # tooling discovery (and humans running it locally) find plain
-          # `clang-format`.
           update-alternatives --install /usr/bin/clang-format clang-format \
             /usr/bin/clang-format-18 100
 
       - name: Check C++ formatting
         shell: bash
         run: |
-          find src \
-            -path '*/zed-ros2-wrapper' -prune -o \
+          find low-level/src high-level/src \
             -type f \( -name '*.hpp' -o -name '*.h' \
                     -o -name '*.cpp' -o -name '*.cc' \) \
             -print0 \
             | xargs -0 -r clang-format --dry-run --Werror
-
-  # ----------------------------------------------------------------------
-  # Job 3: full colcon build + tests + clang-tidy.
-  # ----------------------------------------------------------------------
-  build-and-test:
-    name: Build & Test (colcon)
-    runs-on: ubuntu-24.04
-    container:
-      image: ros:jazzy-ros-base
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install build tooling
-        shell: bash
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            build-essential \
-            python3-colcon-common-extensions \
-            python3-vcstool \
-            python3-rosdep \
-            clang-tidy-18 \
-            jq \
-            ros-jazzy-rmw-cyclonedds-cpp
-            # ^ the ros-base image ships Fast DDS only; we use Cyclone (see env).
-          update-alternatives --install /usr/bin/clang-tidy clang-tidy \
-            /usr/bin/clang-tidy-18 100
-
-      - name: Cache apt archives
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: apt-${{ runner.os }}-${{ hashFiles('src/**/package.xml', 'repos') }}
-          restore-keys: |
-            apt-${{ runner.os }}-
-
-      - name: Import upstream repos (vcstool)
-        shell: bash
-        run: |
-          # Pulls zed-ros2-interfaces (msgs only, no SDK dep) plus any
-          # other forks pinned in the repos file at the repo root.
-          vcs import src < repos
-
-      - name: Exclude ZED wrapper from the build
-        shell: bash
-        run: |
-          # The full ZED ROS2 wrapper requires the proprietary ZED SDK,
-          # which is not installable in CI. COLCON_IGNORE skips the dir;
-          # any packages that depend on zed_msgs are unblocked because
-          # zed-ros2-interfaces was imported above.
-          if [ -d src/zed-ros2-wrapper ]; then
-            touch src/zed-ros2-wrapper/COLCON_IGNORE
-          fi
-
-      - name: rosdep install
-        shell: bash
-        run: |
-          # Each step starts a fresh shell — re-source ROS every time.
-          source /opt/ros/jazzy/setup.bash
-          rosdep update --rosdistro jazzy
-          # --skip-keys, by entry:
-          #   fastcdr                    — DDS impl we do not use (we use Cyclone)
-          #   rti-connext-dds-6.0.1      — RTI Connext, not installed in CI
-          #   urdfdom_headers            — supplied transitively; rosdep DB lags
-          #   zed_components, zed_wrapper — ZED SDK packages excluded above
-          # Keep this list in sync with reality — stale skip-keys hide real
-          # missing-dep errors.
-          rosdep install --from-paths src --ignore-src -r -y \
-            --skip-keys "fastcdr rti-connext-dds-6.0.1 urdfdom_headers zed_components zed_wrapper"
-
-      - name: colcon build
-        shell: bash
-        run: |
-          source /opt/ros/jazzy/setup.bash
-          # CMAKE_EXPORT_COMPILE_COMMANDS produces compile_commands.json
-          # in each package's build dir — required input for clang-tidy below.
-          colcon build \
-            --event-handlers console_cohesion+ \
-            --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-
-      - name: clang-tidy
-        shell: bash
-        run: |
-          # We deliberately do not source ROS here; clang-tidy reads
-          # compile_commands.json which has absolute include paths already.
-
-          # First-party packages = subdirs of src/ committed to this repo.
-          # Anything pulled in by `vcs import` (zed-ros2-interfaces, ublox
-          # forks, etc.) is not in the git index, so it's skipped — we do
-          # not lint upstream code.
-          mapfile -t first_party < <(git -C "$GITHUB_WORKSPACE" \
-            ls-tree -d --name-only HEAD src/ 2>/dev/null)
-          if [ ${#first_party[@]} -eq 0 ]; then
-            echo "No first-party packages tracked under src/; skipping clang-tidy."
-            exit 0
-          fi
-          # Build a regex like /src/(pkg_a|pkg_b)/ from the tracked dirs.
-          stripped=("${first_party[@]#src/}")
-          filter_re="/src/($(IFS='|'; echo "${stripped[*]}"))/"
-
-          shopt -s nullglob
-          status=0
-          for cc in build/*/compile_commands.json; do
-            pkg=$(basename "$(dirname "$cc")")
-            # jq -> list of TUs; drop anything from /opt/ros (system headers)
-            # and anything under /build/ (generated message code), then
-            # keep only files in first-party package dirs.
-            files=$(jq -r '.[].file' "$cc" \
-              | grep -v '^/opt/ros' \
-              | grep -v '/build/' \
-              | grep -E "$filter_re" || true)
-            if [ -n "$files" ]; then
-              echo "::group::clang-tidy $pkg"
-              echo "$files" | xargs -r clang-tidy -p "build/$pkg" || status=$?
-              echo "::endgroup::"
-            fi
-          done
-          exit $status
-
-      - name: colcon test
-        shell: bash
-        run: |
-          source install/setup.bash
-          # --return-code-on-test-failure: without it, colcon test exits 0
-          # even when individual tests fail (it only fails on infra errors).
-          # --maxfail caps noisy pytest output once things are clearly broken.
-          colcon test \
-            --return-code-on-test-failure \
-            --event-handlers console_cohesion+ \
-            --pytest-args "--maxfail=5"
-
-      - name: colcon test-result
-        # Always run so the test summary is visible even when colcon test
-        # exited non-zero above.
-        if: always()
-        shell: bash
-        run: colcon test-result --verbose

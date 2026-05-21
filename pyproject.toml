@@ -1,4 +1,4 @@
-# Ruff configuration for the Viator Rover ROS2 workspace.
+# Ruff configuration for the ROS2 workspace.
 # Mirrored by the lint-python CI job — when bumping settings here, also
 # update the pinned ruff version in .github/workflows/ci.yml.
 
@@ -7,13 +7,13 @@
 target-version = "py312"
 line-length = 100
 
-# Skip generated and vendored trees. zed-ros2-wrapper is upstream code we
-# do not style-police.
+# Skip generated and vendored trees. `repos/` holds upstream code pulled
+# in via vcstool (zed-ros2-wrapper, etc.) — we don't style-police any of it.
 extend-exclude = [
     "build",
     "install",
     "log",
-    "src/zed-ros2-wrapper",
+    "repos",
 ]
 
 [tool.ruff.lint]
