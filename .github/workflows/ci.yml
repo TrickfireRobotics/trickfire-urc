@@ -1,7 +1,5 @@
 name: CI
 
-# Quoted because YAML 1.1 parses bare `on` as the boolean True; some
-# linters reject the unquoted form even though GitHub accepts it.
 "on":
   push:
     branches: [master, main]
@@ -10,11 +8,7 @@ name: CI
 
 env:
   ROS_DISTRO: jazzy
-  # Fast DDS has intermittent discovery failures inside GitHub Actions
-  # containers; Cyclone DDS is significantly more reliable for CI.
   RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
-  # Keep DDS traffic on loopback so parallel runners on the same network
-  # segment cannot accidentally discover each other's nodes.
   ROS_LOCALHOST_ONLY: "1"
   DEBIAN_FRONTEND: noninteractive
 
@@ -34,16 +28,12 @@ jobs:
           python-version: "3.12"  # matches Jazzy's system Python
 
       - name: Install ruff
-        # Pinned for reproducibility. Bump deliberately in its own PR so a
-        # ruff release cannot silently turn green CI red overnight.
         run: pip install ruff==0.6.9
 
       - name: ruff format --check
         run: ruff format --check src/
 
       - name: ruff check
-        # --output-format=github emits ::error annotations so violations
-        # appear inline on the PR diff view.
         run: ruff check src/ --output-format=github
 
   # ----------------------------------------------------------------------
