@@ -14,6 +14,7 @@ jobs:
     steps:
       - uses: actions/stale@v9
         with:
+          repo-token: ${{ secrets.TRICKFIREBOT_PRIVATE_KEY }}
           days-before-stale: 14
           days-before-close: 7
           stale-issue-label: stale
