@@ -21,6 +21,11 @@
         "editor.defaultColorDecorators": "never",
         "diffEditor.ignoreTrimWhitespace": false
     },
+    "[shellscript]": {
+        "editor.defaultFormatter": "mkhl.shfmt",
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": true
+    },
     "[astro]": {
         "editor.defaultFormatter": "astro-build.astro-vscode",
         "editor.formatOnSave": true,
@@ -59,18 +64,13 @@
     "files.exclude": {
         // General
         "**/.git": true,
-        "**/.hg": true,
-        "**/.svn": true,
         "**/.DS_Store": true,
-        "**/Thumbs.db": true,
 
         // Python
         "**/.ruff_cache": true,
         "**/.mypy_cache": true,
         "**/__pycache__": true,
         "**/*.egg-info": true,
-        "build/": true,
-        "**/.venv": true,
 
         // Astro website
         "docs/.astro": true,
@@ -84,16 +84,21 @@
 
     "python.terminal.activateEnvironment": false,
     "python.analysis.extraPaths": [
-        "/opt/ros/jazzy/lib/python3.10/site-packages",
-        "/opt/ros/jazzy/local/lib/python3.10/dist-packages",
-        ".github"
+        "/opt/ros/jazzy/lib/python3.12/site-packages",
+        "/opt/ros/jazzy/local/lib/python3.12/dist-packages"
     ],
     "python.autoComplete.extraPaths": [
-        "/opt/ros/jazzy/lib/python3.10/site-packages",
-        "/opt/ros/jazzy/local/lib/python3.10/dist-packages",
-        ".github"
+        "/opt/ros/jazzy/lib/python3.12/site-packages",
+        "/opt/ros/jazzy/local/lib/python3.12/dist-packages"
     ],
-    "python.analysis.exclude": ["./build", "./install", "./log"],
+    "python.analysis.exclude": [
+        "./build",
+        "./install",
+        "./log",
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.*"
+    ],
     "python.defaultInterpreterPath": "python3",
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
