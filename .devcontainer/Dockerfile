@@ -4,10 +4,14 @@ FROM ros:jazzy
 # Install dependencies from apt
 RUN apt-get update && apt-get install -y \
   git \
-  python3-pip \
   ssh-client \
-  ros-jazzy-rosbridge-server
+  ros-jazzy-rosbridge-server \
+  clang \
+  clang-tidy \
+  clang-format \
+  python3-pip 
 
+RUN pip3 install ruff --break-system-packages
 RUN rm -rf /var/lib/apt/lists/*
 
 RUN useradd trickfire \
