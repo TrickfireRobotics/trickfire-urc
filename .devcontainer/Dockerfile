@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y \
   clang \
   clang-tidy \
   clang-format \
+  pipx \
   python3-pip 
 
-RUN pip3 install ruff --break-system-packages
 RUN rm -rf /var/lib/apt/lists/*
 
 RUN useradd trickfire \
@@ -20,4 +20,8 @@ RUN useradd trickfire \
   --no-log-init \
   -G video
 
-COPY .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
+USER trickfire
+RUN pipx install ruff
+
+COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
+WORKDIR /home/trickfire

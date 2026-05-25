@@ -64,16 +64,14 @@ alias la='ls -A --color=auto'
 alias l='ls -CF --color=auto'
 alias ..='cd ..'
 alias ...='cd ../..'
+alias grep='grep --color=auto'
 
 # ROS
 alias rtl='ros2 topic list'
 alias rte='ros2 topic echo'
 alias rnl='ros2 node list'
-alias rni='ros2 node info'
 alias rsl='ros2 service list'
 alias rpe='ros2 param list'
-alias rpg='ros2 param get'
-alias rps='ros2 param set'
 alias rs='_ros_source_env'
 
 # colcon
@@ -81,13 +79,12 @@ alias cb='colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COM
 alias cbt='colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON --packages-select'
 alias ct='colcon test --packages-select'
 
-# Python ruff
+# ruff
 alias rf='ruff check .'
 alias rff='ruff check . --fix'
 alias rfmt='ruff format .'
-alias rfcheck='ruff check . && ruff format . --check'
 
-# C++ clang
+# clang
 alias ctidy='clang-tidy'
 alias cformat='clang-format -i'
 
@@ -105,7 +102,7 @@ cfmt-all() {
     find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.cc" \) \
         -not -path "*/build/*" \
         -not -path "*/install/*" \
-        | xargs clang-format -i
+        | xargs --no-run-if-empty clang-format -i
     echo "clang-format applied"
 }
 
@@ -114,7 +111,7 @@ ctidy-all() {
     find . \( -name "*.cpp" -o -name "*.cc" \) \
         -not -path "*/build/*" \
         -not -path "*/install/*" \
-        | xargs clang-tidy -p "$build_dir"
+        | xargs --no-run-if-empty clang-tidy -p "$build_dir"
 }
 
 # ---------- bash completion ----------
