@@ -1,0 +1,20 @@
+# --------------------------------------------------------------------------------------------
+# Robot ROS2 Environment
+# --------------------------------------------------------------------------------------------
+services:
+  robot:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    image: trickfire-robot:latest
+    container_name: trickfire-robot
+    user: trickfire
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ..
+        target: /home/trickfire/trickfire-urc
+    working_dir: /home/trickfire/trickfire-urc
+    stdin_open: true
+    tty: true
