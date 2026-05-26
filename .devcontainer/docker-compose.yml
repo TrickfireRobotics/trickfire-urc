@@ -1,13 +1,10 @@
-# --------------------------------------------------------------------------------------------
-# Robot ROS2 Environment
-# --------------------------------------------------------------------------------------------
 services:
   robot:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-    image: trickfire-robot:latest
-    container_name: trickfire-robot
+    image: trickfire-urc:latest
+    container_name: trickfire-urc
     user: trickfire
     environment:
       TZ: ${TZ:-UTC}
