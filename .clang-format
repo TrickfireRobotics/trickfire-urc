@@ -1,0 +1,28 @@
+---
+Language: Cpp
+Standard: c++23
+BasedOnStyle: Google
+
+ColumnLimit: 100
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+AccessModifierOffset: -4
+IndentCaseLabels: true
+NamespaceIndentation: None
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+BraceWrapping:
+  AfterClass: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  BeforeElse: false
+BreakBeforeBraces: Attach
+
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
