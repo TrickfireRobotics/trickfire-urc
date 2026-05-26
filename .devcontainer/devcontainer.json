@@ -1,0 +1,27 @@
+{
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "robot",
+    "containerUser": "trickfire",
+    "remoteUser": "trickfire",
+    "workspaceFolder": "/home/trickfire/trickfire-urc",
+    "shutdownAction": "stopCompose",
+    "runArgs": [
+        "--cap-add=SYS_PTRACE",
+        "--security-opt",
+        "seccomp=unconfined"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.pylance",
+                "charliermarsh.ruff",
+                "llvm-vs-code-extensions.vscode-clangd",
+                "xaver.clang-format",
+                "ms-azuretools.vscode-containers",
+                "DotJoshJohnson.xml",
+                "mkhl.shfmt"
+            ]
+        }
+    }
+}
