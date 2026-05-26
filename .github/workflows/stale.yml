@@ -1,0 +1,34 @@
+name: Stale PR & Issue Bot
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # every Monday at 9am UTC
+  workflow_dispatch:
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.TRICKFIREBOT_PRIVATE_KEY }}
+          days-before-stale: 14
+          days-before-close: 7
+          stale-issue-label: stale
+          stale-pr-label: stale
+          stale-issue-message: >
+            This issue has had no activity for 14 days and has been marked stale.
+            It will be closed in 7 days if there is no further activity.
+          stale-pr-message: >
+            This PR has had no activity for 14 days and has been marked stale.
+            It will be closed in 7 days if there is no further activity.
+          close-issue-message: >
+            This issue was closed due to inactivity. Reopen if it is still relevant.
+          close-pr-message: >
+            This PR was closed due to inactivity. Reopen if the work is still in progress.
+          exempt-issue-labels: "pinned,security,in-progress"
+          exempt-pr-labels: "pinned,in-progress"
+          exempt-draft-pr: true

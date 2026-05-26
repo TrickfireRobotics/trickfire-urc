@@ -1,0 +1,42 @@
+name: Clang Format Check
+
+on:
+  push:
+    paths:
+      - "**/*.cpp"
+      - "**/*.cc"
+      - "**/*.cxx"
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.hpp"
+      - "**/*.hxx"
+      - ".clang-format"
+  pull_request:
+    paths:
+      - "**/*.cpp"
+      - "**/*.cc"
+      - "**/*.cxx"
+      - "**/*.c"
+      - "**/*.h"
+      - "**/*.hpp"
+      - "**/*.hxx"
+      - ".clang-format"
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          find . -type f \( \
+            -name "*.cpp" -o -name "*.cc" -o -name "*.cxx" -o \
+            -name "*.c"   -o -name "*.h"  -o -name "*.hpp" -o \
+            -name "*.hxx" \
+          \) -not -path "./.git/*" | xargs clang-format --dry-run --Werror
