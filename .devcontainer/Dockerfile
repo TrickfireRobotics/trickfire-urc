@@ -10,9 +10,17 @@ RUN apt-get update && apt-get install -y \
   clang-tidy \
   clang-format \
   pipx \
-  python3-pip 
+  python3-pip \
+  apt-get install --no-install-recommends -y locales && \
+  locale-gen en_US en_US.UTF-8 && \
+  update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 &&
 
 RUN rm -rf /var/lib/apt/lists/*
+
+ENV LANG=en_US.UTF-8
+
+RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && \
+    echo "${TZ}" > /etc/timezone
 
 RUN useradd trickfire \
   --shell /bin/bash \
