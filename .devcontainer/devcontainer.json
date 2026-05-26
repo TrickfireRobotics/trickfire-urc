@@ -1,10 +1,10 @@
 {
-    "context": "../",
-    "dockerFile": "Dockerfile",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "robot",
     "containerUser": "trickfire",
     "remoteUser": "trickfire",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/home/trickfire/${localWorkspaceFolderBasename},type=bind",
-    "workspaceFolder": "/home/trickfire/${localWorkspaceFolderBasename}",
+    "workspaceFolder": "/home/trickfire/trickfire-urc",
+    "shutdownAction": "stopCompose",
     "runArgs": [
         "--cap-add=SYS_PTRACE",
         "--security-opt",
