@@ -21,11 +21,26 @@ fi
 # ---------- lesspipe ----------
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
-# ---------- ROS environment ----------
-_ros_source_env() {
-    if [ -n "${ROS_DISTRO:-}" ] && [ -f "/opt/ros/${ROS_DISTRO}/setup.bash" ]; then
-        source "/opt/ros/${ROS_DISTRO}/setup.bash"
+# ---------- pixi environment ----------
+# Activates the workspace's pixi env (which provides ROS Jazzy via RoboStack
+# plus the clang/ruff tooling). Run `pixi install` once after a fresh clone.
+_tf_pixi_activate() {
+    local manifest="/home/trickfire/trickfire-urc/pixi.toml"
+    if [ -n "${PIXI_ENV_ACTIVATED:-}" ]; then
+        return 0
     fi
+    if ! command -v pixi >/dev/null 2>&1 || [ ! -f "$manifest" ]; then
+        return 0
+    fi
+    local hook
+    hook="$(pixi shell-hook --manifest-path "$manifest" 2>/dev/null)" || return 0
+    eval "$hook"
+    export PIXI_ENV_ACTIVATED=1
+}
+_tf_pixi_activate
+
+# ---------- ROS workspace overlay ----------
+_ros_source_env() {
     if [ -n "${ROS_WS:-}" ] && [ -f "${ROS_WS}/install/setup.bash" ]; then
         source "${ROS_WS}/install/setup.bash"
     fi

@@ -11,6 +11,8 @@ on:
       - "**/*.hpp"
       - "**/*.hxx"
       - ".clang-format"
+      - "pixi.toml"
+      - "pixi.lock"
   pull_request:
     paths:
       - "**/*.cpp"
@@ -21,6 +23,8 @@ on:
       - "**/*.hpp"
       - "**/*.hxx"
       - ".clang-format"
+      - "pixi.toml"
+      - "pixi.lock"
 
 jobs:
   clang-format:
@@ -28,10 +32,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install clang-format
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y clang-format
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          environments: lint
+          cache: true
 
       - name: Check formatting
         run: |
@@ -39,4 +43,5 @@ jobs:
             -name "*.cpp" -o -name "*.cc" -o -name "*.cxx" -o \
             -name "*.c"   -o -name "*.h"  -o -name "*.hpp" -o \
             -name "*.hxx" \
-          \) -not -path "./.git/*" | xargs clang-format --dry-run --Werror
+          \) -not -path "./.git/*" -not -path "*/build/*" -not -path "*/install/*" -print0 \
+            | xargs -0 --no-run-if-empty pixi run -e lint clang-format --dry-run --Werror
