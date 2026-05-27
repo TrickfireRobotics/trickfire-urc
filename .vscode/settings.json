@@ -83,14 +83,6 @@
     // ================================
 
     "python.terminal.activateEnvironment": false,
-    "python.analysis.extraPaths": [
-        "/opt/ros/jazzy/lib/python3.12/site-packages",
-        "/opt/ros/jazzy/local/lib/python3.12/dist-packages"
-    ],
-    "python.autoComplete.extraPaths": [
-        "/opt/ros/jazzy/lib/python3.12/site-packages",
-        "/opt/ros/jazzy/local/lib/python3.12/dist-packages"
-    ],
     "python.analysis.exclude": [
         "./build",
         "./install",
@@ -99,7 +91,7 @@
         "**/__pycache__",
         "**/.*"
     ],
-    "python.defaultInterpreterPath": "python3",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.pixi/envs/default/bin/python",
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
     },

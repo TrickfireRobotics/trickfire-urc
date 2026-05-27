@@ -5,14 +5,10 @@ on:
         paths:
             - "**/*.sh"
             - "**/*.bashrc"
-            - "pixi.toml"
-            - "pixi.lock"
     pull_request:
         paths:
             - "**/*.sh"
             - "**/*.bashrc"
-            - "pixi.toml"
-            - "pixi.lock"
 
 jobs:
   shfmt:
@@ -20,10 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: prefix-dev/setup-pixi@v0.8.1
-        with:
-          environments: lint
-          cache: true
+      - name: Install shfmt
+        uses: mfinelli/setup-shfmt@v3
 
       - name: Check shell formatting
-        run: pixi run -e lint shfmt-check
+        run: shfmt -d .

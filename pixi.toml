@@ -1,7 +1,7 @@
-[project]
+[workspace]
 name = "trickfire-urc"
 description = "Trickfire UW URC robotics workspace"
-channels = ["https://prefix.dev/robostack-staging", "conda-forge"]
+channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
 platforms = ["linux-64", "linux-aarch64"]
 version = "0.1.0"
 
@@ -18,12 +18,10 @@ clang-tools = "*"
 
 [feature.lint.dependencies]
 ruff = "*"
-shfmt = "*"
 
 [feature.lint.tasks]
 ruff-check = "ruff check ."
 ruff-format-check = "ruff format --check ."
-shfmt-check = "shfmt -d ."
 
 [environments]
 default = { features = ["ros", "cpp-tools", "lint"] }
