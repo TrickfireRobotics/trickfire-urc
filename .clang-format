@@ -1,6 +1,6 @@
 ---
 Language: Cpp
-Standard: c++23
+Standard: c++20
 BasedOnStyle: Google
 
 ColumnLimit: 100
