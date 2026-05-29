@@ -43,5 +43,5 @@ jobs:
             -name "*.cpp" -o -name "*.cc" -o -name "*.cxx" -o \
             -name "*.c"   -o -name "*.h"  -o -name "*.hpp" -o \
             -name "*.hxx" \
-          \) -not -path "./.git/*" -not -path "*/build/*" -not -path "*/install/*" -print0 \
+          \) -not -path "./.git/*" -not -path "*/build/*" -not -path "*/install/*" -not -path "*/.pixi/*" -print0 \
             | xargs -0 --no-run-if-empty pixi run -e lint clang-format --dry-run --Werror
