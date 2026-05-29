@@ -62,6 +62,9 @@
 
     "editor.rulers": [100],
     "files.exclude": {
+        // Pixi
+        "**/.pixi": true,
+
         // General
         "**/.git": true,
         "**/.DS_Store": true,
