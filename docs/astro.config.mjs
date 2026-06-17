@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 export default defineConfig({
-    site: 'https://trickfirerobotics.github.io',
+    site: 'https://docs.trickfirerobotics.com',
     base: '/urc',
     srcDir: './',
     integrations: [
