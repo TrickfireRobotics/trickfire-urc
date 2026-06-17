@@ -4,10 +4,10 @@ TrickFire's codebase for the _insert name_ rover for the [University Rover Chall
 
 ## Documentation
 
-**Full documentation is at [trickfirerobotics.com/urc](https://trickfirerobotics.com/urc)**
+**Full documentation is at [docs.trickfirerobotics.com/trickfire-urc](https://docs.trickfirerobotics.com/trickfire-urc)**
 
-- [Placeholder](https://trickfirerobotics.com/urc/temp/temp) - replace this after a new section gets added
-- [Placeholder](https://trickfirerobotics.com/urc/temp/temp) - replace this after a new section gets added
-- [Placeholder](https://trickfirerobotics.com/urc/temp/temp) - replace this after a new section gets added
-- [Placeholder](https://trickfirerobotics.com/urc/temp/temp) - replace this after a new section gets added
-- [Placeholder](https://trickfirerobotics.com/urc/temp/temp) - replace this after a new section gets added
+- [Placeholder](https://docs.trickfirerobotics.com/trickfire-urc/temp/temp) - replace this after a new section gets added
+- [Placeholder](https://docs.trickfirerobotics.com/trickfire-urc/temp/temp) - replace this after a new section gets added
+- [Placeholder](https://docs.trickfirerobotics.com/trickfire-urc/temp/temp) - replace this after a new section gets added
+- [Placeholder](https://docs.trickfirerobotics.com/trickfire-urc/temp/temp) - replace this after a new section gets added
+- [Placeholder](https://docs.trickfirerobotics.com/trickfire-urc/temp/temp) - replace this after a new section gets added
