@@ -1,0 +1,28 @@
+[workspace]
+name = "trickfire-urc"
+description = "Trickfire UW URC robotics workspace"
+channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
+platforms = ["linux-64", "linux-aarch64"]
+version = "0.1.0"
+
+[dependencies]
+python = "3.12.*"
+
+[feature.ros.dependencies]
+ros-jazzy-desktop = "*"
+ros-jazzy-rosbridge-server = "*"
+colcon-common-extensions = "*"
+
+[feature.cpp-tools.dependencies]
+clang-tools = "*"
+
+[feature.lint.dependencies]
+ruff = "*"
+
+[feature.lint.tasks]
+ruff-check = "ruff check ."
+ruff-format-check = "ruff format --check ."
+
+[environments]
+default = { features = ["ros", "cpp-tools", "lint"] }
+lint = { features = ["lint", "cpp-tools"], no-default-feature = true }

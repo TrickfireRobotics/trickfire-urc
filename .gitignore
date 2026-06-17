@@ -1,6 +1,9 @@
 # Basic
 .DS_Store
 
+# pixi
+.pixi/
+
 # Docs
 docs/.astro/
 docs/node_modules/
