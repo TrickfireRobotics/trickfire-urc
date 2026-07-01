@@ -5,5 +5,4 @@
 .pixi/
 
 # Docs
-docs/.astro/
-docs/node_modules/
+**/node_modules/
