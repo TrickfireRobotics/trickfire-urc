@@ -75,10 +75,8 @@
         "**/__pycache__": true,
         "**/*.egg-info": true,
 
-        // Astro website
-        "docs/.astro": true,
-        "docs/node_modules": true,
-        "docs/dist": true
+        // Docs
+        "**/node_modules": true
     },
 
     // ================================

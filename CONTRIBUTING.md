@@ -8,7 +8,8 @@ Thanks for wanting to contribute to this repo! This guide covers the layout of t
 trickfire-urc/
 ├── src-autonomy/    # ROS 2 workspace for high level things, more details below
 ├── src-platform/    # ROS 2 workspace for low level things, more details below
-├── docs/            # Documentation site (Astro / Starlight)
+├── docs/            # Documentation
+├── docs.config.ts   # Documentation config
 └── pyproject.toml   # Python tooling config
 ```
 
@@ -34,15 +35,7 @@ The ROS 2 workspace containing low level code.
 
 ### `docs/` - Documentation site
 
-An [Astro Starlight](https://starlight.astro.build/) site published to GitHub Pages. Make sure you add a header in the individual markdown files (`---` sections) and use proper Astro Starlight syntax (like for callout blocks or codeblocks). You can locally test the docs by running the following commands in your shell. This assumes you have `npm` installed:
-
-```bash
-cd docs
-npm install
-npm run dev
-```
-
-If you want to add a doc page, add a markdown file in its content folder in `docs/content/docs`. Do not forget to route it in `docs/astro.config.mjs` in the `sidebar` section.
+A documentation site build using our [custom TrickFire framework](https://github.com/TrickFireRobotics/TrickFireRobotics.github.io). Look at the README in that repo for more info on how to work on the docs.
 
 ## Formatting
 

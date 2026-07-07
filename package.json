@@ -1,0 +1,12 @@
+{
+    "name": "trickfire-urc",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "docs:dev": "trickfire-docs dev",
+        "docs:build": "trickfire-docs build"
+    },
+    "dependencies": {
+        "trickfire-docs": "latest"
+    }
+}
