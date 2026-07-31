@@ -1,5 +1,6 @@
 {
     "$schema": "https://docs.trickfirerobotics.com/docs.config.schema.json",
     "name": "TrickFire URC",
-    "description": "Main codebase for the <name> rover for the University Rover Challenge"
+    "description": "Main codebase for the <name> rover for the University Rover Challenge",
+    "icon": "Bot"
 }
