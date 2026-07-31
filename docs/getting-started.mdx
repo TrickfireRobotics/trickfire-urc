@@ -4,7 +4,7 @@ description: Write your first page and preview it locally.
 slug: /
 ---
 
-This site is built with [`trickfire-docs`](https://github.com/TrickfireRobotics/docs). Pages live in the `docs/` folder as Markdown (or MDX) files - add, edit, or delete files there and the sidebar/site rebuild automatically.
+This site is built with [`trickfire-docs`](https://github.com/TrickfireRobotics/docs). Pages live in the `docs/` folder as Markdown (or MDX) files - add, edit, or delete files there and the sidebar/site rebuild automatically. For more info go look at [docs.trickfirerobotics.com/trickfire-docs](https://docs.trickfirerobotics.com/trickfire-docs).
 
 ## Preview locally
 
@@ -14,15 +14,7 @@ npx trickfire-docs dev
 
 This starts a local dev server with live reload. Edit any file under `docs/` and the browser updates automatically.
 
-## Build for production
-
-```bash title="Terminal"
-npx trickfire-docs build
-```
-
-Outputs the static site to `dist/`.
-
-<Callout type="idea" title="Tip">
+<Callout type="note" title="Keep in mind">
     Changes to `docs.config.json` (site name, description, sidebar) require restarting the dev
-    server - only content edits under `docs/` hot-reload.
+    server to reflect, only content edits under `docs/` hot-reload.
 </Callout>
