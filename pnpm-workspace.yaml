@@ -1,6 +1,0 @@
-allowBuilds:
-  esbuild: true
-  sharp: true
-
-minimumReleaseAgeExclude:
-  - trickfire-docs

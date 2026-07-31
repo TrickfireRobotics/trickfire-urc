@@ -4,5 +4,5 @@
 # pixi
 .pixi/
 
-# Docs
-**/node_modules/
+# trickfire-docs
+dist/

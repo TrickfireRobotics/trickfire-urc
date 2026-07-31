@@ -73,10 +73,7 @@
         "**/.ruff_cache": true,
         "**/.mypy_cache": true,
         "**/__pycache__": true,
-        "**/*.egg-info": true,
-
-        // Docs
-        "**/node_modules": true
+        "**/*.egg-info": true
     },
 
     // ================================
