@@ -23,6 +23,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -fsSL https://pixi.sh/install.sh | \
     env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
 
+# Download and install ZED SDK
+RUN wget https://download.stereolabs.com/zedsdk/5.4/l4t39.2/jetsons && \
+    chmod +x jetsons && \
+    ./jetsons
+
+# Set zed environment variables
+ENV ZED_SDK_DIR=/usr/local/zed
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/zed/lib
+
 RUN useradd trickfire \
     --shell /bin/bash \
     --create-home \
