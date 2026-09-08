@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Run inside the development container; no hardware or workspace build needed.
+set -eo pipefail
+source /opt/ros/jazzy/setup.bash
+
+test "$(id -un)" = trickfire
+test -w /home/trickfire/trickfire-urc
+for tool in colcon clangd clang-tidy clang-format gdb git ssh shfmt ruff; do
+	command -v "$tool" >/dev/null
+done
+ros2 pkg prefix rviz2
+ros2 pkg prefix rosbridge_server
+colcon --help >/dev/null
+python3 -m pytest --version
+python3 -m pip check
+ruff --version
+
+# Use module imports: Dev Containers mistakes Python from-imports for Docker FROM.
+python3 - <<'PY'
+import coal
+import cv2
+import cv_bridge
+import numpy as np
+import pinocchio as pin
+import rclpy
+
+# Exercise compiled bindings together, not just their package metadata.
+pixels = np.zeros((8, 8, 3), dtype=np.uint8)
+assert cv2.cvtColor(pixels, cv2.COLOR_BGR2GRAY).shape == (8, 8)
+bridge = cv_bridge.CvBridge()
+message = bridge.cv2_to_imgmsg(pixels, encoding="bgr8")
+np.testing.assert_array_equal(bridge.imgmsg_to_cv2(message, "bgr8"), pixels)
+
+model = pin.buildSampleModelManipulator()
+data = model.createData()
+pin.forwardKinematics(model, data, pin.neutral(model))
+assert np.isfinite(data.oMi[-1].translation).all()
+
+sphere = coal.Sphere(1.0)
+result = coal.CollisionResult()
+coal.collide(
+    sphere, coal.Transform3s(), sphere, coal.Transform3s(),
+    coal.CollisionRequest(), result,
+)
+assert result.isCollision()
+
+rclpy.init()
+node = rclpy.create_node("devcontainer_smoke_test")
+node.destroy_node()
+rclpy.shutdown()
+print(f"Bindings OK: NumPy {np.__version__}, OpenCV {cv2.__version__}, "
+      f"Pinocchio {pin.__version__}, Coal {coal.__version__}")
+PY
+
+echo "Development container smoke check passed."
