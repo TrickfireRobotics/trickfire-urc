@@ -89,7 +89,7 @@
         "**/__pycache__",
         "**/.*"
     ],
-    "python.defaultInterpreterPath": "${workspaceFolder}/.pixi/envs/default/bin/python",
+    "python.defaultInterpreterPath": "/usr/bin/python3",
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
     },

@@ -1,0 +1,41 @@
+services:
+  robot:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.dev
+    image: trickfire-urc-dev:latest
+    container_name: trickfire-urc
+    user: trickfire
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ..
+        target: /home/trickfire/trickfire-urc
+    working_dir: /home/trickfire/trickfire-urc
+    stdin_open: true
+    tty: true
+
+  # On the rover, set ROVER_BASE_IMAGE and ZED_SDK_URL to validated values, then:
+  # docker compose -f .devcontainer/docker-compose.yaml run --build --rm prod
+  # GPU and camera access require runtime configuration for the rover hardware.
+  prod:
+    profiles: [prod]
+    platform: linux/arm64
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.prod
+      args:
+        ROVER_BASE_IMAGE: ${ROVER_BASE_IMAGE:-rover-base-unset--pending-zed-sdk-hardware-validation}
+        ZED_SDK_URL: ${ZED_SDK_URL:-}
+    image: trickfire-urc-prod:latest
+    environment:
+      TZ: ${TZ:-UTC}
+    network_mode: host
+    volumes:
+      - type: bind
+        source: ..
+        target: /trickfire-urc
+    working_dir: /trickfire-urc
+    stdin_open: true
+    tty: true
