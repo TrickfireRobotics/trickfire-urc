@@ -16,21 +16,20 @@ services:
     stdin_open: true
     tty: true
 
-  # On the rover, set ROVER_BASE_IMAGE and ZED_SDK_URL to validated values, then:
+  # Jetson AGX Orin running JetPack 7.2:
   # docker compose -f .devcontainer/docker-compose.yaml run --build --rm prod
-  # GPU and camera access require runtime configuration for the rover hardware.
+  # Camera device mounts depend on the camera model; see README.md.
   prod:
     profiles: [prod]
     platform: linux/arm64
+    runtime: nvidia
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile.prod
-      args:
-        ROVER_BASE_IMAGE: ${ROVER_BASE_IMAGE:-rover-base-unset--pending-zed-sdk-hardware-validation}
-        ZED_SDK_URL: ${ZED_SDK_URL:-}
     image: trickfire-urc-prod:latest
     environment:
       TZ: ${TZ:-UTC}
+      NVIDIA_VISIBLE_DEVICES: all
     network_mode: host
     volumes:
       - type: bind
