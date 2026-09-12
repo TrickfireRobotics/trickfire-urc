@@ -1,0 +1,3 @@
+# Container configuration and scripts need Linux line endings on every host.
+.gitattributes text eol=lf
+.devcontainer/** text eol=lf
