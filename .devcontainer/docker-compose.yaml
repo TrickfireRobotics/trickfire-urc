@@ -2,7 +2,8 @@ services:
   robot:
     build:
       context: ..
-      dockerfile: .devcontainer/Dockerfile.dev
+      dockerfile: .devcontainer/Dockerfile
+      target: dev
     image: trickfire-urc-dev:latest
     container_name: trickfire-urc
     user: trickfire
@@ -18,14 +19,15 @@ services:
 
   # Jetson AGX Orin running JetPack 7.2:
   # docker compose -f .devcontainer/docker-compose.yaml run --build --rm prod
-  # Camera device mounts depend on the camera model; see README.md.
+  # Camera device mounts depend on the camera model
   prod:
     profiles: [prod]
     platform: linux/arm64
     runtime: nvidia
     build:
       context: ..
-      dockerfile: .devcontainer/Dockerfile.prod
+      dockerfile: .devcontainer/Dockerfile
+      target: prod
     image: trickfire-urc-prod:latest
     environment:
       TZ: ${TZ:-UTC}
