@@ -89,11 +89,22 @@
         "**/__pycache__",
         "**/.*"
     ],
-    "python.defaultInterpreterPath": "${workspaceFolder}/.pixi/envs/default/bin/python",
+    "python.defaultInterpreterPath": "/usr/bin/python3",
     "editor.codeActionsOnSave": {
         "source.organizeImports": "explicit"
     },
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingModuleSource": "none"
-    }
+    },
+    "cursorpyright.analysis.diagnosticSeverityOverrides": {
+        "reportMissingModuleSource": "none"
+    },
+    "cursorpyright.analysis.exclude": [
+        "./build",
+        "./install",
+        "./log",
+        "**/node_modules",
+        "**/__pycache__",
+        "**/.*"
+    ]
 }

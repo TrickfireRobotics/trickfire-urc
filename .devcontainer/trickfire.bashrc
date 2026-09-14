@@ -1,7 +1,7 @@
 # If not running interactively, don't do anything
 case $- in
-    *i*) ;;
-      *) return;;
+*i*) ;;
+*) return ;;
 esac
 
 # ---------- shell behavior ----------
@@ -12,63 +12,44 @@ shopt -s histappend checkwinsize
 
 # ---------- colors ----------
 if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
+	test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+	alias grep='grep --color=auto'
+	alias fgrep='fgrep --color=auto'
+	alias egrep='egrep --color=auto'
 fi
 
 # ---------- lesspipe ----------
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
-# ---------- pixi environment ----------
-# Activates the workspace's pixi env (which provides ROS Jazzy via RoboStack
-# plus the clang/ruff tooling). Run `pixi install` once after a fresh clone.
-_tf_pixi_activate() {
-    local manifest="/home/trickfire/trickfire-urc/pixi.toml"
-    if [ -n "${PIXI_ENV_ACTIVATED:-}" ]; then
-        return 0
-    fi
-    if ! command -v pixi >/dev/null 2>&1 || [ ! -f "$manifest" ]; then
-        return 0
-    fi
-    local hook
-    hook="$(pixi shell-hook --manifest-path "$manifest" 2>/dev/null)" || return 0
-    eval "$hook"
-    export PIXI_ENV_ACTIVATED=1
-}
-_tf_pixi_activate
-
-# ---------- ROS workspace overlay ----------
+# ---------- ROS environment and workspace overlay ----------
+# VS Code terminals do not run the image entrypoint, so source ROS here too.
 _ros_source_env() {
-    if [ -n "${ROS_WS:-}" ] && [ -f "${ROS_WS}/install/setup.bash" ]; then
-        source "${ROS_WS}/install/setup.bash"
-    fi
+	source /opt/ros/jazzy/setup.bash
+	if [ -n "${ROS_WS:-}" ] && [ -f "${ROS_WS}/install/setup.bash" ]; then
+		source "${ROS_WS}/install/setup.bash"
+	fi
 }
 
-if [ -z "${ROS_ENV_SOURCED:-}" ]; then
-    _ros_source_env
-    export ROS_ENV_SOURCED=1
-fi
+_ros_source_env
 
 # ---------- prompt ----------
 _tf_git_branch() {
-    git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null
+	git symbolic-ref --quiet --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null
 }
 
 _tf_prompt() {
-    local branch=""
-    local reset="\[\e[0m\]"
-    local pink="\[\e[38;2;233;60;171m\]"
-    local green="\[\e[38;2;1;255;0m\]"
-    local blue="\[\e[38;2;80;170;255m\]"
+	local branch=""
+	local reset="\[\e[0m\]"
+	local pink="\[\e[38;2;233;60;171m\]"
+	local green="\[\e[38;2;1;255;0m\]"
+	local blue="\[\e[38;2;80;170;255m\]"
 
-    branch="$(_tf_git_branch)"
-    if [ -n "$branch" ]; then
-        branch=" ${blue}(${branch})${reset}"
-    fi
+	branch="$(_tf_git_branch)"
+	if [ -n "$branch" ]; then
+		branch=" ${blue}(${branch})${reset}"
+	fi
 
-    PS1="${pink}\u${reset}:${green}\w${reset}${branch}\\$ "
+	PS1="${pink}\u${reset}:${green}\w${reset}${branch}\\$ "
 }
 PROMPT_COMMAND="_tf_prompt"
 
@@ -105,35 +86,35 @@ alias cformat='clang-format -i'
 
 # ---------- helper functions ----------
 ros-clean() {
-    if [ -z "${ROS_WS:-}" ]; then
-        echo "ROS_WS not set"
-        return 1
-    fi
-    rm -rf "${ROS_WS}/build" "${ROS_WS}/install" "${ROS_WS}/log"
-    echo "Cleaned build/install/log from ${ROS_WS}"
+	if [ -z "${ROS_WS:-}" ]; then
+		echo "ROS_WS not set"
+		return 1
+	fi
+	rm -rf "${ROS_WS}/build" "${ROS_WS}/install" "${ROS_WS}/log"
+	echo "Cleaned build/install/log from ${ROS_WS}"
 }
 
 cfmt-all() {
-    find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.cc" \) \
-        -not -path "*/build/*" \
-        -not -path "*/install/*" \
-        | xargs --no-run-if-empty clang-format -i
-    echo "clang-format applied"
+	find . \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" -o -name "*.cc" \) \
+		-not -path "*/build/*" \
+		-not -path "*/install/*" |
+		xargs --no-run-if-empty clang-format -i
+	echo "clang-format applied"
 }
 
 ctidy-all() {
-    local build_dir="${ROS_WS:-$PWD}/build"
-    find . \( -name "*.cpp" -o -name "*.cc" \) \
-        -not -path "*/build/*" \
-        -not -path "*/install/*" \
-        | xargs --no-run-if-empty clang-tidy -p "$build_dir"
+	local build_dir="${ROS_WS:-$PWD}/build"
+	find . \( -name "*.cpp" -o -name "*.cc" \) \
+		-not -path "*/build/*" \
+		-not -path "*/install/*" |
+		xargs --no-run-if-empty clang-tidy -p "$build_dir"
 }
 
 # ---------- bash completion ----------
 if ! shopt -oq posix; then
-    if [ -f /usr/share/bash-completion/bash_completion ]; then
-        . /usr/share/bash-completion/bash_completion
-    elif [ -f /etc/bash_completion ]; then
-        . /etc/bash_completion
-    fi
+	if [ -f /usr/share/bash-completion/bash_completion ]; then
+		. /usr/share/bash-completion/bash_completion
+	elif [ -f /etc/bash_completion ]; then
+		. /etc/bash_completion
+	fi
 fi
