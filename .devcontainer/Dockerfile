@@ -19,6 +19,9 @@ ros-jazzy-cv-bridge
 ros-jazzy-pinocchio
 ros-jazzy-ros-base
 ros-jazzy-rosbridge-server
+ros-jazzy-geometry-msgs
+ros-jazzy-sensor-msgs
+ros-jazzy-nav2-simple-commander
 PACKAGES
 
 # prod: Jetson AGX Orin / JetPack 7.2 (L4T 39.2, Ubuntu 24.04).
