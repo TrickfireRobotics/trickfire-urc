@@ -6,3 +6,8 @@
 
 # trickfire-docs
 dist/
+
+# colcon generated files
+build/
+install/
+log/

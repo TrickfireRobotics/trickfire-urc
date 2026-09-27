@@ -23,7 +23,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "camera = camera.camera.camera:main",
+            "camera = camera.camera:main",
         ],
     },
 )
