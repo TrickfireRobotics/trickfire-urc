@@ -71,7 +71,10 @@ class CameraNode(Node):
         Callback function to publish a camera frame to the specified topic.
         """
 
-        # TODO implement
+        ret, frame = self.frameCapture.read()
+
+        if ret:
+            self._publisher.publish(self.bridge.cv2_to_compressed_imgmsg(frame))
 
     def _detectTags(self) -> None:
         """
