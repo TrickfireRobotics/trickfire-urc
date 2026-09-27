@@ -32,7 +32,7 @@ def getCameras() -> list[int]:
         if not camera.isOpened():
             non_working_ports += 1
         else:
-            is_reading, img = camera.read()
+            is_reading, _ = camera.read()
             _ = camera.get(WIDTH_PROPERTY_ID)
             _ = camera.get(HEIGHT_PROPERTY_ID)
             if is_reading:
