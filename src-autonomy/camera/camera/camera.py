@@ -52,11 +52,18 @@ class CameraNode(Node):
         # since it is a more expensive operation than just publishing the camera frame.
         TAG_DETECTION_TIMER_PERIOD_SECONDS = 0.5
 
+        FRAME_PUBLISHER_TOPIC = f"{topicName}/raw"
+        TAG_DETECTION_TOPIC = f"{topicName}/tags"
+
         super().__init__("camera_node")
         self.get_logger().info(colorStr("Launching Camera Node", ColorCodes.GREEN_OK))
 
-        self._publisher = self.create_publisher(CompressedImage, topicName, PUBLISHER_QUEUE_SIZE)
-        self.get_logger().info(colorStr(f"Created Publisher: {topicName}", ColorCodes.GREEN_OK))
+        self._publisher = self.create_publisher(
+            CompressedImage, FRAME_PUBLISHER_TOPIC, PUBLISHER_QUEUE_SIZE
+        )
+
+        self.get_logger().info(colorStr(f"Created Publisher: {FRAME_PUBLISHER_TOPIC}",
+                                        ColorCodes.GREEN_OK))
 
         self.frameTimer = self.create_timer(FRAME_PUBLISH_TIMER_PERIOD_SECONDS, self.publishFrame)
         self.tagTimer = self.create_timer(TAG_DETECTION_TIMER_PERIOD_SECONDS, self.detectTags)
@@ -82,6 +89,7 @@ class CameraNode(Node):
         """
 
         # TODO implement
+
 
 def main(args: list[str] | None = None) -> None:
     """
@@ -110,6 +118,6 @@ def main(args: list[str] | None = None) -> None:
     finally:
         rclpy.shutdown()
 
+
 if __name__ == "__main__":
     main()
-
