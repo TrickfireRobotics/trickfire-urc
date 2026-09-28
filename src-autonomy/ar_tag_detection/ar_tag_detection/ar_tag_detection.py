@@ -5,6 +5,8 @@ system
 It's classes include the ArTagDetectionNode
 """
 
+import sys
+
 import cv2 as cv
 import rclpy
 from cv_bridge import CvBridge
@@ -14,13 +16,11 @@ from std_msgs.msg import Int32MultiArray
 
 
 class ArTagDetectionNode(Node):
-    def __init__(self) -> None:
-        super().__init__("ar_tag_detection_node")
+    def __init__(self, camera_id: int = 0) -> None:
+        node_name = f"ar_tag_detection_node_{camera_id}"
+        super().__init__(node_name)
 
-        self.declare_parameter("camera_id", 0)
-        camera_id = self.get_parameter("camera_id").get_parameter_value().integer_value
-
-        self.declare_parameter("image_topic", f"/camera_{camera_id}/image/raw")
+        self.declare_parameter("image_topic", f"/camera_{camera_id}/image/compressed")
         image_topic = self.get_parameter("image_topic").get_parameter_value().string_value
 
         self.declare_parameter("process_rate_hz", 2.0)
@@ -115,10 +115,21 @@ class ArTagDetectionNode(Node):
         return topLeft, topRight, bottomRight, bottomLeft
 
 
-def main(args=None):
+def main(args: list[str] | None = None):
     rclpy.init(args=args)
 
-    node = ArTagDetectionNode()
+    camera_id = 0
+    if args is None:
+        args = sys.argv
+
+    for i, arg in enumerate(args):
+        if arg == "--camera-id" and i + 1 < len(args):
+            try:
+                camera_id = int(args[i + 1])
+            except ValueError:
+                pass
+
+    node = ArTagDetectionNode(camera_id=camera_id)
 
     try:
         rclpy.spin(node)
