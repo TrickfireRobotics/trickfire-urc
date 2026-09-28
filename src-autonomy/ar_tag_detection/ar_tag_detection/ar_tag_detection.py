@@ -5,7 +5,6 @@ system
 It's classes include the ArTagDetectionNode
 """
 
-
 import cv2 as cv
 import rclpy
 from cv_bridge import CvBridge

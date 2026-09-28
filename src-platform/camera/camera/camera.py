@@ -1,3 +1,10 @@
+"""
+This moudle contains the logic for setup and operation of the Camera node
+
+Classes included are CameraNode which handles setup and initialization of the node itself.
+"""
+
+
 import threading
 
 import cv2 as cv
@@ -48,7 +55,7 @@ class CameraNode(Node):
         PUBLISHER_QUEUE_SIZE = 10
         FRAME_PUBLISH_TIMER_PERIOD_SECONDS = 0.1
 
-        self.FRAME_PUBLISHER_TOPIC = f"{topicName}/raw"
+        self.FRAME_PUBLISHER_TOPIC = f"{topicName}/compressed"
 
         super().__init__(f"camera_node_{camera}")
 

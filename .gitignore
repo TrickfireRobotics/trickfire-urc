@@ -11,3 +11,7 @@ dist/
 build/
 install/
 log/
+resource/
+
+# Python scripts compiled as bytecode
+__pycache__/
