@@ -1,3 +1,11 @@
+"""
+This module contains the logic for setting up and managing nodes controlling the AR Tag Detection
+system
+
+It's classes include the ArTagDetectionNode
+"""
+
+
 import cv2 as cv
 import rclpy
 from cv_bridge import CvBridge
@@ -52,7 +60,12 @@ class ArTagDetectionNode(Node):
 
         self.get_logger().info(f"AR Tag Node initialized. Subscribed to: {image_topic}")
 
-    def detect_tags(self, msg: CompressedImage):
+    def detect_tags(self, msg: CompressedImage) -> None:
+        """
+        Detects any tag given in the provided image frame. Then publishes a drawn bounding box for
+        the detected tag, it's ID, and the (x,y) location of the corner
+        """
+
         now = self.get_clock().now()
         dt_seconds = (now - self._last_process_time).nanoseconds / 1e9
         if dt_seconds < self._min_process_interval:
