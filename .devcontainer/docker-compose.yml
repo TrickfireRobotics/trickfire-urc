@@ -1,0 +1,17 @@
+services:
+  robot:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    image: trickfire-urc:latest
+    container_name: trickfire-urc
+    user: trickfire
+    environment:
+      TZ: ${TZ:-UTC}
+    volumes:
+      - type: bind
+        source: ..
+        target: /home/trickfire/trickfire-urc
+    working_dir: /home/trickfire/trickfire-urc
+    stdin_open: true
+    tty: true
