@@ -4,7 +4,6 @@ This moudle contains the logic for setup and operation of the Camera node
 Classes included are CameraNode which handles setup and initialization of the node itself.
 """
 
-
 import threading
 
 import cv2 as cv
