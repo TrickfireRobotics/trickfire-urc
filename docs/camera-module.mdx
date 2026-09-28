@@ -6,7 +6,7 @@ description: Documentation on the Camera Module and Node
 ----
 ### Description
 
-This module contains the logic for setup and operation of the Camera node.
+This is a low-level module that contains the logic for setup and operation of the Camera node.
 Classes included are CameraNode which handles node setup.
 
 ----
@@ -16,6 +16,9 @@ Classes included are CameraNode which handles node setup.
 Upon running the module, the module will attempt to discover all cameras connected to the robot
 and create a node for each automatically. The module will then attempt to publish each camera's feed
 as a compressed image to each camera's individual topic.
+
+Nodes for each camera are named under this scheme ```"camera_node_{camera}``` with camera being the
+ID of the camera associated to that node.
 
 ----
 
@@ -62,10 +65,10 @@ original ```destroy_node``` function (```super().destroy_node```)
 
 ----
 
-## Private Methods
+## Private Functions
 
-<Callout type="warn" title="Accessing Private Methods">
-    These methods should only be called within the ```CameraNode``` class.
+<Callout type="warn" title="Accessing Private Functions">
+    These functions should only be called within the ```CameraNode``` class.
 </Callout>
 
 ### CameraNode._publishCameraFrame
@@ -76,5 +79,5 @@ _publishCameraFrame(self) -> None
 This function locks the thread and attempts to call ```frameCapture.read()```. If a frame is 
 returned (as signified from the value of ```ret```), it will then generate a topic message by
 converting the frame into a compressed jpeg. It will then add the timestamp, and ```frame_id``` 
-(the id being equivilant to ```f"camera_{self._camera_id}_optical_frame"```). then publishing the
+(the id being equivilant to ```f"camera_{self._camera_id}_optical_frame"```) then publish the
 msg

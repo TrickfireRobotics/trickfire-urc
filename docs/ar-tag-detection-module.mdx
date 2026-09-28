@@ -6,9 +6,92 @@ description: Documentation on the AR Tag Detection Module and Node
 ----
 ### Description
 
-This module contains the logic for setting up and managing nodes controlling the AR Tag Detection
+This is a high-level module that contains the logic for setting up and managing nodes controlling the AR Tag Detection
 system. It's classes include the ArTagDetectionNode which handles node setup and operation 
 
 ----
 
+### Setup
 
+Upon running the module, the node will attempt to automatically connect to the ```camera_0``` topic 
+as described in the [Camera Module Documentation](./camera-module.mdx) in order to subscribe to it's
+frame publishers. 
+
+If AR Tag detection is needed on multiple cameras, you need to specify the ```camera-id``` to use.
+This is done via ```ros2 run ar_tag_detection ar_tag_detection -- --camera-id N``` where 'N' is the
+Camera ID for the node to subscribe to. If no arg is provided, it will default to ```0``` 
+
+<Callout type="error" title="Important Note">
+    It is important to note that in order to launch this node, a valid camera node is required to be
+    operating and publishing to the ROS.
+</Callout>
+
+----
+
+### Publisher Setup
+
+The AR Detection Module generates it's topics based on the ```camera_id``` provided on
+initialization.
+
+<Accordions>
+    <Accordion title="Tag Detection Topic">
+        When the AR Tag Detection Module discovers a tag, it will publish the frame with a boundind
+        box around the Tag. The publisher publishes to ```/camera_{camera_id}/tags```.
+    </Accordion>
+    <Accordion title="Tag ID Topic">
+        When the AR Tag Detection Module discovers a tag, it will publish the IDs seen. The
+        publisher publishes to ```/camera_{camera_id}/tags/ids```.
+    </Accordion>
+    <Accordion title="Tag Corners Topic">
+        when the AR Tag Detectopm Module discovers a tag, it will publish the (x,y) coordinates of
+        each corner. The publisher publishers to ```/camera_{camera_id}/tags/tag_corners```
+    </Accordion>
+</Accordions>
+
+----
+
+### Subscriber Setup
+
+The AR Tag Detection Module subscribes to a given camera's image topic based off the ```camera-id```
+provided on initialization. It then goes onto call ```detect_tags``` whenever a new frame is recived
+
+----
+
+## Public Functions
+
+### detectTags
+
+```python
+detectTags(self, msg: CompressedImage) -> None
+```
+
+Detects any tag given in the provided image frame. Then publishes a drawn bounding box around the 
+detected tag, it's ID, and the (x,y) location of the corners
+
+In the function, it utilizes the declared parameter ```process_rate_hz``` (which defaults to 2) to 
+determine if it should run the calculations when it sees a tag. This is based off the time of the 
+last calculation. This is to save processing time for other tasks. 
+
+if allowed, it converts the compressed image into a cv readable format, where it utilizes cv2 to
+detect and draw the markers to the frame. It then processes the id's and detected corners via cv2,
+and ```_handleValidTagCorners```. It then handles bridging the frame back to being compressed, 
+adding the time stamps of topic messages, and publishing them to their respective place.
+
+----
+
+## Private Functions
+
+<Callout type="warn" title="Accessing Private Functions">
+    These functions should only be called within the ```ArTagDetectionNode``` class.
+</Callout>
+
+### _handleValidTagCorners
+```python
+_handleValidTagCorners(self, corners: list) -> tuple
+```
+Processes the corners of a valid detected tag
+
+In the function, it converts the list of corners (and their coordinates) into a tuple of tuples
+containing the (x,y) position of each corner. 
+
+---

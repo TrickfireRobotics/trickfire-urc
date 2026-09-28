@@ -42,7 +42,7 @@ class ArTagDetectionNode(Node):
         self.bridge = CvBridge()
 
         self._CAMERA_SUBSCRIBER = self.create_subscription(
-            CompressedImage, image_topic, self.detect_tags, SUBSCRIBER_QUEUE_SIZE
+            CompressedImage, image_topic, self.detectTags, SUBSCRIBER_QUEUE_SIZE
         )
 
         self._TAG_PUBLISHER = self.create_publisher(
@@ -59,10 +59,10 @@ class ArTagDetectionNode(Node):
 
         self.get_logger().info(f"AR Tag Node initialized. Subscribed to: {image_topic}")
 
-    def detect_tags(self, msg: CompressedImage) -> None:
+    def detectTags(self, msg: CompressedImage) -> None:
         """
         Detects any tag given in the provided image frame. Then publishes a drawn bounding box for
-        the detected tag, it's ID, and the (x,y) location of the corner
+        the detected tag, it's ID, and the (x,y) location of the corners
         """
 
         now = self.get_clock().now()
@@ -88,7 +88,7 @@ class ArTagDetectionNode(Node):
             corners_msg.data = []
 
             for markerCorner, markerId in zip(corners, ids_flat):
-                tl, tr, br, bl = self._calculateValidTagCorners(markerCorner)
+                tl, tr, br, bl = self._handleValidTagCorners(markerCorner)
                 id_msg.data.append(int(markerId))
                 corners_msg.data.extend([tl[0], tl[1], tr[0], tr[1], br[0], br[1], bl[0], bl[1]])
 
@@ -100,9 +100,9 @@ class ArTagDetectionNode(Node):
             self._TAG_ID_PUBLISHER.publish(id_msg)
             self._TAG_CORNERS_PUBLISHER.publish(corners_msg)
 
-    def _calculateValidTagCorners(self, corners: list) -> tuple:
+    def _handleValidTagCorners(self, corners: list) -> tuple:
         """
-        Calculates the corners of a valid detected tag
+        Processes the corners of a valid detected tag
         """
         corners = corners.reshape((4, 2))
         (topLeft, topRight, bottomRight, bottomLeft) = corners
