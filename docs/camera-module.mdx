@@ -30,8 +30,8 @@ The camera module automatically generates a topic name with the following naming
 ```
 
 <Callout type="info" title="Automatic Numbering">
-The ```camera_num``` is automatically generated at starts at index 0, so the first camera discovered
-will upload its topic as ```/camera_0/image```
+The ```camera_num``` is automatically generated and starts at index 0, so the first camera 
+discovered will upload its topic as ```/camera_0/image```
 </Callout>
 
 The publisher will attempt to upload the image feed every 0.1 seconds (10 hz)
@@ -46,9 +46,9 @@ getCameras() -> list[int]
 ```
 
 This function returns a list of active camera ID's to the caller. It does this by iterating through
-ports 0 to n, with n being the last port found before reaching the ```NON_WOKRING_PORT_THRESHOLD```
+ports 0 to n, with n being the last port found before reaching the ```NON_WORKING_PORT_THRESHOLD```
 (6 at the time of writing) and attempting to open it via ```cv.VideoCapture(dev_port)```. 
-If its able to be opened and read, it will append itself to ```working_ports```, release the camera
+If it's able to be opened and read, it will append itself to ```working_ports```, release the camera
 and move onto the next one, or finish detection.
 
 

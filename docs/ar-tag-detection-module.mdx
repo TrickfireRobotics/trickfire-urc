@@ -6,15 +6,16 @@ description: Documentation on the AR Tag Detection Module and Node
 ----
 ### Description
 
-This is a high-level module that contains the logic for setting up and managing nodes controlling the AR Tag Detection
-system. It's classes include the ArTagDetectionNode which handles node setup and operation 
+This is a high-level module that contains the logic for setting up and managing nodes controlling 
+the AR Tag Detection system. Its classes include the ArTagDetectionNode which handles node setup 
+and operation 
 
 ----
 
 ### Setup
 
 Upon running the module, the node will attempt to automatically connect to the ```camera_0``` topic 
-as described in the [Camera Module Documentation](./camera-module.mdx) in order to subscribe to it's
+as described in the [Camera Module Documentation](./camera-module.mdx) in order to subscribe to its
 frame publishers. 
 
 If AR Tag detection is needed on multiple cameras, you need to specify the ```camera-id``` to use.
@@ -30,12 +31,12 @@ Camera ID for the node to subscribe to. If no arg is provided, it will default t
 
 ### Publisher Setup
 
-The AR Detection Module generates it's topics based on the ```camera_id``` provided on
+The AR Detection Module generates its topics based on the ```camera_id``` provided on
 initialization.
 
 <Accordions>
     <Accordion title="Tag Detection Topic">
-        When the AR Tag Detection Module discovers a tag, it will publish the frame with a boundind
+        When the AR Tag Detection Module discovers a tag, it will publish the frame with a bounding
         box around the Tag. The publisher publishes to ```/camera_{camera_id}/tags```.
     </Accordion>
     <Accordion title="Tag ID Topic">
@@ -43,7 +44,7 @@ initialization.
         publisher publishes to ```/camera_{camera_id}/tags/ids```.
     </Accordion>
     <Accordion title="Tag Corners Topic">
-        when the AR Tag Detectopm Module discovers a tag, it will publish the (x,y) coordinates of
+        when the AR Tag Detection Module discovers a tag, it will publish the (x,y) coordinates of
         each corner. The publisher publishers to ```/camera_{camera_id}/tags/tag_corners```
     </Accordion>
 </Accordions>
@@ -53,7 +54,8 @@ initialization.
 ### Subscriber Setup
 
 The AR Tag Detection Module subscribes to a given camera's image topic based off the ```camera-id```
-provided on initialization. It then goes onto call ```detect_tags``` whenever a new frame is recived
+provided on initialization. It then goes onto call ```detect_tags``` whenever a new frame is 
+received
 
 ----
 
