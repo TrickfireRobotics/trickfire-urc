@@ -56,6 +56,7 @@ RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/je
 # ------------------------------------
 # Zed sdk installer
 # ------------------------------------
+
 RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
     "https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}.${ZED_SDK_PATCH}/l4t${L4T_MAJOR}.${L4T_MINOR}/jetsons" \
     && chmod +x /tmp/ZED_SDK_Linux.run \
@@ -80,8 +81,11 @@ USER trickfire
 COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
 WORKDIR /home/trickfire/trickfire-urc
 
-# dev: portable, no camera hardware or CUDA. Minimal Ubuntu; ROS, clang
-# tooling, and Python tooling come from the pixi environment (/pixi.toml).
+
+# ------------------------------------
+# Dev setup
+# ------------------------------------
+
 FROM ubuntu:24.04 AS dev
 
 ENV LANG=en_US.UTF-8 \
