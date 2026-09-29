@@ -1,8 +1,17 @@
 # Basic
 .DS_Store
+__pycache__/
 
 # pixi
 .pixi/
+
+# colcon workspaces
+src-autonomy/build/
+src-autonomy/install/
+src-autonomy/log/
+src-platform/build/
+src-platform/install/
+src-platform/log/
 
 # trickfire-docs
 dist/
