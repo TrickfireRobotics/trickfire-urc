@@ -1,11 +1,11 @@
 {
-    "dockerComposeFile": "docker-compose.yaml",
+    "dockerComposeFile": "docker-compose.yml",
     "service": "robot",
     "containerUser": "trickfire",
     "remoteUser": "trickfire",
     "workspaceFolder": "/home/trickfire/trickfire-urc",
     "shutdownAction": "stopCompose",
-    "postCreateCommand": "/usr/local/bin/dev-smoke-test",
+    "postCreateCommand": "pixi install",
     "customizations": {
         "vscode": {
             "extensions": [
