@@ -12,3 +12,8 @@ __pycache__/
 # zed
 *.run
 *.zstd.run
+
+# colcon
+install/
+log/
+build/
