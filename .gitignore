@@ -17,3 +17,7 @@ __pycache__/
 install/
 log/
 build/
+resource/
+
+# test generated files
+src-autonomy/ar_tag_detection/test/output_images/
