@@ -11,6 +11,3 @@ dist/
 # these itself, matched to the target L4T/CUDA version)
 *.run
 *.zstd.run
-
-# ublox gps package we clone from github ros2-ublox-zedf9p
-ublox_ws/

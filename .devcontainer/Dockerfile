@@ -71,8 +71,11 @@ RUN curl -fsSL https://pixi.sh/install.sh | \
 # gps support using ros2-ublox-zedf9p
 # -----------------------------------
 
-RUN git clone https://github.com/gokulp01/ros2-ublox-zedf9p.git /src-platform/ublox_ws/src
+RUN git submodule update --init
 
+# -----------------------------------
+# create trickfire user
+# -----------------------------------
 
 RUN useradd trickfire \
     --shell /bin/bash \
