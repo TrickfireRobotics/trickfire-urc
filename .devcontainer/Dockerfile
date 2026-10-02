@@ -46,12 +46,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
     wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
     echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
-        > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
     apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" && \
     rm -rf /var/lib/apt/lists/* \
-        /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
-        /etc/apt/preferences.d/nvidia-repo-pin-600 \
-        /etc/apt/trusted.gpg.d/jetson-ota-public.asc
+    /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    /etc/apt/preferences.d/nvidia-repo-pin-600 \
+    /etc/apt/trusted.gpg.d/jetson-ota-public.asc
 
 # ------------------------------------
 # Zed sdk installer
@@ -67,6 +67,16 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
 RUN curl -fsSL https://pixi.sh/install.sh | \
     env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
 
+# -----------------------------------
+# gps support using ros2-ublox-zedf9p
+# -----------------------------------
+
+RUN git submodule update --init
+
+# -----------------------------------
+# create trickfire user
+# -----------------------------------
+
 RUN useradd trickfire \
     --shell /bin/bash \
     --create-home \
@@ -80,7 +90,6 @@ RUN useradd trickfire \
 USER trickfire
 COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
 WORKDIR /home/trickfire/trickfire-urc
-
 
 # ------------------------------------
 # Dev setup
