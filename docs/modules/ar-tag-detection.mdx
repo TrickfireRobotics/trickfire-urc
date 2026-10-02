@@ -3,103 +3,109 @@ title: AR Tag Detection Module
 description: Documentation on the AR Tag Detection Module and Node
 ---
 
-<Callout type="error" title="NEEDS UPDATING">
-    This documentation needs to be updated
-</Callout>
-
 ----
 ### Description
 
-This is a high-level module that contains the logic for setting up and managing nodes controlling
-the AR Tag Detection system. Its classes include the ArTagDetectionNode which handles node setup
-and operation
+This is a low-level/medium-level module that contains the logic for detecting ArUco fiducial
+markers in compressed camera frames and publishing the results as ROS 2 topics. Classes included
+are `TagDetectionLogic`, which performs OpenCV-based detection and marker corner processing, and
+`ArTagDetectionNode`, which hooks the logic into a ROS node, subscriptions, and publishers.
 
----
+----
 
 ### Setup
 
-Upon running the module, the node will attempt to automatically connect to the `camera_0` topic
-as described in the [Camera Module Documentation](./camera-module.mdx) in order to subscribe to its
-frame publishers.
+When launched, the node will create a subscriber to the configured camera image topic. By default it
+subscribes to `/camera_0/image/compressed`, but this can be changed by passing `--camera-id N`
+when starting the node:
 
-If AR Tag detection is needed on multiple cameras, you need to specify the `camera-id` to use.
-This is done via `ros2 run ar_tag_detection ar_tag_detection -- --camera-id N` where 'N' is the
-Camera ID for the node to subscribe to. If no arg is provided, it will default to `0`
+`ros2 run ar_tag_detection ar_tag_detection -- --camera-id N`
+
+where `N` is the camera index. If no value is provided, it defaults to `0`.
+
+The node publishes detection results to topics under `/camera_{camera_id}/tags`, including the
+annotated image, the list of detected IDs, and the corner coordinates for each marker. A valid
+camera node must already be publishing compressed images to the ROS graph for detection to work.
 
 <Callout type="error" title="Important Note">
     It is important to note that in order to launch this node, a valid camera node is required to be
     operating and publishing to the ROS.
 </Callout>
 
----
+----
 
 ### Publisher Setup
 
-The AR Detection Module generates its topics based on the `camera_id` provided on
+The AR Detection Module automatically generates topic names based on the `camera_id` provided on
 initialization.
 
 <Accordions>
     <Accordion title="Tag Detection Topic">
-        When the AR Tag Detection Module discovers a tag, it will publish the frame with a bounding
-        box around the Tag. The publisher publishes to ```/camera_{camera_id}/tags```.
+        When a valid ArUco tag is detected, the node publishes the annotated frame with drawn markers
+        to `/camera_{camera_id}/tags`.
     </Accordion>
     <Accordion title="Tag ID Topic">
-        When the AR Tag Detection Module discovers a tag, it will publish the IDs seen. The
-        publisher publishes to ```/camera_{camera_id}/tags/ids```.
+        Each detected marker's ID is published as an `Int32MultiArray` on
+        `/camera_{camera_id}/tags/ids`.
     </Accordion>
     <Accordion title="Tag Corners Topic">
-        when the AR Tag Detection Module discovers a tag, it will publish the (x,y) coordinates of
-        each corner. The publisher publishers to ```/camera_{camera_id}/tags/tag_corners```
+        Each detected tag's four corner coordinates are published as flattened `Int32MultiArray`
+        data on `/camera_{camera_id}/tags/tag_corners`.
     </Accordion>
 </Accordions>
 
----
+----
 
 ### Subscriber Setup
 
-The AR Tag Detection Module subscribes to a given camera's image topic based off the `camera-id`
-provided on initialization. It then goes onto call `detect_tags` whenever a new frame is
-received
+The node subscribes to the compressed image topic associated with the selected camera, for example
+`/camera_{camera_id}/image/compressed`. Each new image triggers `ArTagDetectionNode.frame_callback`,
+which rate-limits processing using the `process_rate_hz` parameter and then passes the frame to
+`TagDetectionLogic.feedFrame`.
 
----
+----
 
 ## Public Functions
 
-### detectTags
+### TagDetectionLogic.feedFrame
 
 ```python
-detectTags(self, msg: CompressedImage) -> None
+feedFrame(self, frame: CompressedImage) -> tuple[CompressedImage, Int32MultiArray, Int32MultiArray]
 ```
 
-Detects any tag given in the provided image frame. Then publishes a drawn bounding box around the
-detected tag, it's ID, and the (x,y) location of the corners
+This function accepts a compressed camera frame, converts it to a BGR OpenCV image, runs ArUco
+marker detection, and returns the annotated frame plus arrays containing detected tag IDs and corner
+coordinates. If one or more markers are found, it draws the marker outlines on the image,
+flattens the `ids` array, and converts each tag's four corners into a list of `[x, y]` values for
+publishing.
 
-In the function, it utilizes the declared parameter `process_rate_hz` (which defaults to 2) to
-determine if it should run the calculations when it sees a tag. This is based off the time of the
-last calculation. This is to save processing time for other tasks.
+### ArTagDetectionNode.frame_callback
 
-if allowed, it converts the compressed image into a cv readable format, where it utilizes cv2 to
-detect and draw the markers to the frame. It then processes the id's and detected corners via cv2,
-and `_handleValidTagCorners`. It then handles bridging the frame back to being compressed,
-adding the time stamps of topic messages, and publishing them to their respective place.
+```python
+frame_callback(self, msg: CompressedImage) -> None
+```
 
----
+This callback is triggered when a new compressed image is received on the configured camera topic. It
+enforces the configured `process_rate_hz` throttle, updates the last processed timestamp, calls
+`TagDetectionLogic.feedFrame`, and then publishes the resulting image, tag IDs, and tag corner
+arrays to their respective topics.
+
+----
 
 ## Private Functions
 
 <Callout type="warn" title="Accessing Private Functions">
-    These functions should only be called within the ```ArTagDetectionNode``` class.
+    These functions should only be called within the `TagDetectionLogic` class.
 </Callout>
 
-### \_handleValidTagCorners
+### TagDetectionLogic._handleValidTagCorners
 
 ```python
-_handleValidTagCorners(self, corners: list) -> tuple
+_handleValidTagCorners(self, corners: np.ndarray) -> tuple[Point2D, Point2D, Point2D, Point2D]
 ```
 
-Processes the corners of a valid detected tag
+This function reshapes the raw corner data returned by OpenCV into a consistent 4-corner ordering:
+top-left, top-right, bottom-right, and bottom-left. Each corner is converted from floating-point
+OpenCV coordinates into integer `(x, y)` tuples for downstream publishing and logging.
 
-In the function, it converts the list of corners (and their coordinates) into a tuple of tuples
-containing the (x,y) position of each corner.
-
----
+----
