@@ -15,6 +15,57 @@ from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Int32MultiArray
 
 
+class TagDetectionLogic:
+    def __init__(self, wanted_tag_type: int) -> None:
+        self._detected_tag_type = cv.aruco.getPredefinedDictionary(wanted_tag_type)
+        self._detected_tag_params = cv.aruco.DetectorParameters()
+        self.bridge = CvBridge()
+
+    def feedFrame(
+        self, frame: CompressedImage
+    ) -> tuple[CompressedImage, Int32MultiArray, Int32MultiArray]:
+
+        converted_frame = self.bridge.compressed_imgmsg_to_cv2(frame, desired_encoding="bgr8")
+        (corners, ids, _) = cv.aruco.detectMarkers(
+            self._converted_frame, self._detected_tag_type, parameters=self._detected_tag_params
+        )
+
+        if ids is not None and len(corners) > 0:
+            cv.aruco.drawDetectedMarkers(converted_frame, corners, ids)
+
+            ids_flat = ids.flatten()
+            detected_ids = Int32MultiArray()
+            detected_corners = Int32MultiArray()
+
+            detected_ids.data = []
+            detected_corners.data = []
+
+            for markerCorners, markerId in zip(corners, ids_flat):
+                tl, tr, br, bl = self._handleValidTagCorners(markerCorners)
+                detected_ids.data.append(int(markerId))
+                detected_corners.data.extend(
+                    [tl[0], tl[1], tr[0], tr[1], br[0], br[1], bl[0], bl[1]]
+                )
+                self.get_logger().info(f"Detected tag: {markerId} at corners: {tl} {tr} {br} {bl}")
+
+        compressed_image = self.bridge.cv2_to_compressed_imgmsg(converted_frame, dst_format="jpg")
+        return compressed_image, detected_ids, detected_corners
+
+    def _handleValidTagCorners(self, corners: list) -> tuple:
+        """
+        Processes the corners of a valid detected tag
+        """
+        corners = corners.reshape((4, 2))
+        (topLeft, topRight, bottomRight, bottomLeft) = corners
+
+        topRight = (int(topRight[0]), int(topRight[1]))
+        bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+        bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+        topLeft = (int(topLeft[0]), int(topLeft[1]))
+
+        return topLeft, topRight, bottomRight, bottomLeft
+
+
 class ArTagDetectionNode(Node):
     def __init__(self, camera_id: int = 0) -> None:
         node_name = f"ar_tag_detection_node_{camera_id}"
@@ -28,7 +79,6 @@ class ArTagDetectionNode(Node):
         self._min_process_interval = 1.0 / process_rate if process_rate > 0 else 0.0
         self._last_process_time = self.get_clock().now()
 
-        WANTED_TAG_TYPE = cv.aruco.DICT_4X4_50
         PUBLISHER_QUEUE_SIZE = 10
         SUBSCRIBER_QUEUE_SIZE = 10
 
@@ -36,13 +86,8 @@ class ArTagDetectionNode(Node):
         self.TAG_ID_TOPIC = f"/camera_{camera_id}/tags/ids"
         self.TAG_CORNERS_TOPIC = f"/camera_{camera_id}/tags/tag_corners"
 
-        self._detected_tag_type = cv.aruco.getPredefinedDictionary(WANTED_TAG_TYPE)
-        self._detected_tag_params = cv.aruco.DetectorParameters()
-
-        self.bridge = CvBridge()
-
         self._CAMERA_SUBSCRIBER = self.create_subscription(
-            CompressedImage, image_topic, self.detectTags, SUBSCRIBER_QUEUE_SIZE
+            CompressedImage, image_topic, self.frame_callback, SUBSCRIBER_QUEUE_SIZE
         )
 
         self._TAG_PUBLISHER = self.create_publisher(
@@ -59,60 +104,21 @@ class ArTagDetectionNode(Node):
 
         self.get_logger().info(f"AR Tag Node initialized. Subscribed to: {image_topic}")
 
-    def detectTags(self, msg: CompressedImage) -> None:
-        """
-        Detects any tag given in the provided image frame. Then publishes a drawn bounding box for
-        the detected tag, it's ID, and the (x,y) location of the corners
-        """
-
+    def frame_callback(self, msg: CompressedImage) -> None:
         now = self.get_clock().now()
         dt_seconds = (now - self._last_process_time).nanoseconds / 1e9
         if dt_seconds < self._min_process_interval:
             return  # Drop the frame if it's too soon
         self._last_process_time = now
 
-        frame = self.bridge.compressed_imgmsg_to_cv2(msg, desired_encoding="bgr8")
+        (frame, ids_msg, corners_msg) = self._tag_detection_logic.feedFrame(msg)
 
-        (corners, ids, _) = cv.aruco.detectMarkers(
-            frame, self._detected_tag_type, parameters=self._detected_tag_params
-        )
+        frame.header.stamp = self.get_clock().now().to_msg()
+        frame.header.frame_id = "ar_tag_detection_optical_frame"
 
-        if ids is not None and len(corners) > 0:
-            cv.aruco.drawDetectedMarkers(frame, corners, ids)
-
-            ids_flat = ids.flatten()
-            id_msg = Int32MultiArray()
-            corners_msg = Int32MultiArray()
-
-            id_msg.data = []
-            corners_msg.data = []
-
-            for markerCorner, markerId in zip(corners, ids_flat):
-                tl, tr, br, bl = self._handleValidTagCorners(markerCorner)
-                id_msg.data.append(int(markerId))
-                corners_msg.data.extend([tl[0], tl[1], tr[0], tr[1], br[0], br[1], bl[0], bl[1]])
-
-            img_msg = self.bridge.cv2_to_compressed_imgmsg(frame, dst_format="jpg")
-            img_msg.header.stamp = self.get_clock().now().to_msg()
-            img_msg.header.frame_id = "ar_tag_detection_optical_frame"
-
-            self._TAG_PUBLISHER.publish(img_msg)
-            self._TAG_ID_PUBLISHER.publish(id_msg)
-            self._TAG_CORNERS_PUBLISHER.publish(corners_msg)
-
-    def _handleValidTagCorners(self, corners: list) -> tuple:
-        """
-        Processes the corners of a valid detected tag
-        """
-        corners = corners.reshape((4, 2))
-        (topLeft, topRight, bottomRight, bottomLeft) = corners
-
-        topRight = (int(topRight[0]), int(topRight[1]))
-        bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-        bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-        topLeft = (int(topLeft[0]), int(topLeft[1]))
-
-        return topLeft, topRight, bottomRight, bottomLeft
+        self._TAG_PUBLISHER.publish(frame)
+        self._TAG_ID_PUBLISHER.publish(ids_msg)
+        self._TAG_CORNERS_PUBLISHER.publish(corners_msg)
 
 
 def main(args: list[str] | None = None):
