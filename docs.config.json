@@ -2,5 +2,15 @@
     "$schema": "https://docs.trickfirerobotics.com/docs.config.schema.json",
     "name": "TrickFire URC",
     "description": "Main codebase for the <name> rover for the University Rover Challenge",
-    "icon": "Bot"
+    "icon": "Bot",
+    "sidebar": [
+        { "label": "Getting Started", "slug": "index" },
+        {
+            "label": "Modules",
+            "items": [
+                { "label": "AR Tag detection", "slug": "modules/ar-tag-detection" },
+                { "label": "Camera", "slug": "deployment/camera" }
+            ]
+        }
+    ]
 }
