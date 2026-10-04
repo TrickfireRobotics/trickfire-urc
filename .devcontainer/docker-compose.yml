@@ -17,6 +17,20 @@ services:
     stdin_open: true
     tty: true
 
+  # Bridges ROS 2 topics to the simulator (native pixi or its own container),
+  # since DDS multicast discovery can't cross the Docker boundary.
+  # Starts with the devcontainer; idle until a sim-side bridge connects.
+  # See docs/simulation.mdx.
+  sim-bridge:
+    image: eclipse/zenoh-bridge-ros2dds:1.10.1 # keep in sync with sim-bridge.sh
+    environment:
+      ROS_DISTRO: jazzy
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+    command: [router, -l, tcp/0.0.0.0:7447, --no-multicast-scouting]
+    ports:
+      - "127.0.0.1:7447:7447"
+    restart: unless-stopped
+
   # Jetson AGX Orin running JetPack 7.2 (L4T r39.2):
   # docker compose -f .devcontainer/docker-compose.yml run --build --rm prod
   # Camera device mounts depend on the camera model.
