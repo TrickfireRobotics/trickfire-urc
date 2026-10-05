@@ -10,29 +10,31 @@ wanted_tag_type = cv2.aruco.DICT_4X4_50
 unit_under_test = TagDetectionLogic(wanted_tag_type)
 
 
-def generate_4x4_50_test_markers(
-    amount: int = 5,
-    marker_size: int = 200,
-    sequential_ids: bool = True,
-    output_dir: Path = Path(__file__).parent / "test_images",
-) -> list:
-    """Generates a list of ArUco marker images for testing."""
+def generate_4x4_50_test_markers(output_dir: Path, amount: int = 5, marker_size: int = 200,
+                                 sequential_ids: bool = True) -> list:
+    """Generates ArUco marker images into a target directory with unique IDs."""
     output_dir.mkdir(exist_ok=True, parents=True)
-    generated_ids = []
-    for i in range(amount):
-        marker_image = None
-        marker_id = i if sequential_ids else random.randint(0, 49)
-        generated_ids.append(marker_id)
+
+    if sequential_ids:
+        generated_ids = list(range(amount))
+    else:
+        # DICT_4X4_50 has 50 valid IDs (0 through 49)
+        generated_ids = random.sample(range(50), amount)
+
+    for marker_id in generated_ids:
         marker_image = cv2.aruco.generateImageMarker(
-            cv2.aruco.getPredefinedDictionary(wanted_tag_type), marker_id, marker_size, marker_image
+            cv2.aruco.getPredefinedDictionary(wanted_tag_type),
+            marker_id, marker_size
         )
 
         margin = 20
         marker_image = cv2.copyMakeBorder(
-            marker_image, margin, margin, margin, margin, cv2.BORDER_CONSTANT, value=255
+            marker_image, margin, margin, margin, margin,
+            cv2.BORDER_CONSTANT, value=255
         )
 
         cv2.imwrite(str(output_dir / f"marker_{marker_id}.png"), marker_image)
+
     return generated_ids
 
 
@@ -44,7 +46,7 @@ def test_draw_detected_markers(tmp_path: Path) -> None:
     bridge = CvBridge()
 
     generated_ids = generate_4x4_50_test_markers(
-        amount=5, marker_size=200, sequential_ids=False, output_dir=test_images
+        amount=50, marker_size=200, sequential_ids=False, output_dir=test_images
     )
     discovered_ids = []
     for file_path in sorted(test_images.iterdir()):
