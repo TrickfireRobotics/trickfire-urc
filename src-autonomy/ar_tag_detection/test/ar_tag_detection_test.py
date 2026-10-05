@@ -10,8 +10,9 @@ wanted_tag_type = cv2.aruco.DICT_4X4_50
 unit_under_test = TagDetectionLogic(wanted_tag_type)
 
 
-def generate_4x4_50_test_markers(output_dir: Path, amount: int = 5, marker_size: int = 200,
-                                 sequential_ids: bool = True) -> list:
+def generate_4x4_50_test_markers(
+    output_dir: Path, amount: int = 5, marker_size: int = 200, sequential_ids: bool = True
+) -> list:
     """Generates ArUco marker images into a target directory with unique IDs."""
     output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -23,14 +24,12 @@ def generate_4x4_50_test_markers(output_dir: Path, amount: int = 5, marker_size:
 
     for marker_id in generated_ids:
         marker_image = cv2.aruco.generateImageMarker(
-            cv2.aruco.getPredefinedDictionary(wanted_tag_type),
-            marker_id, marker_size
+            cv2.aruco.getPredefinedDictionary(wanted_tag_type), marker_id, marker_size
         )
 
         margin = 20
         marker_image = cv2.copyMakeBorder(
-            marker_image, margin, margin, margin, margin,
-            cv2.BORDER_CONSTANT, value=255
+            marker_image, margin, margin, margin, margin, cv2.BORDER_CONSTANT, value=255
         )
 
         cv2.imwrite(str(output_dir / f"marker_{marker_id}.png"), marker_image)
