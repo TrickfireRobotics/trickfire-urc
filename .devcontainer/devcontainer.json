@@ -5,7 +5,6 @@
     "remoteUser": "trickfire",
     "workspaceFolder": "/home/trickfire/trickfire-urc",
     "shutdownAction": "stopCompose",
-    "postCreateCommand": "pixi install",
     "customizations": {
         "vscode": {
             "extensions": [
