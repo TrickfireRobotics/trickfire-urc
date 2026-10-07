@@ -2,7 +2,6 @@ import random
 from pathlib import Path
 
 import cv2
-import pytest
 from ar_tag_detection.ar_tag_detection import TagDetectionLogic
 from cv_bridge import CvBridge
 
