@@ -20,3 +20,6 @@ build/
 
 # test generated files
 src-autonomy/ar_tag_detection/test/output_images/
+
+# calibration images for cameras
+src-platform/camera/camera/calibration_images/*.jpg
