@@ -1,0 +1,3 @@
+[submodule "src-platform/ak-series"]
+	path = src-platform/ak-series
+	url = https://github.com/TrickfireRobotics/ak-series
