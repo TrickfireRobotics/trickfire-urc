@@ -1,0 +1,4 @@
+[submodule "src-platform/ublox"]
+	path = src-platform/ublox
+	url = https://github.com/KumarRobotics/ublox.git
+	branch = ros2
