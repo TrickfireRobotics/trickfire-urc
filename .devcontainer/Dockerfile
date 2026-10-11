@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:24.04 AS prod
+FROM ros:jazzy-ros-base AS prod
 ARG DEBIAN_FRONTEND=noninteractive
 ARG L4T_RELEASE=r39.2
 ARG CUDA_TOOLKIT_PKG=cuda-toolkit-13-2
@@ -11,28 +11,15 @@ ARG L4T_MINOR=2
 
 ENV LANG=en_US.UTF-8 \
     TZ=UTC \
-    PIXI_HOME=/opt/pixi \
-    PATH=/opt/pixi/bin:/usr/local/cuda/bin:${PATH} \
+    PATH=/usr/local/cuda/bin:${PATH} \
     LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    cmake \
-    curl \
-    git \
-    gnupg2 \
-    less \
     locales \
-    lsb-release \
     openssh-client \
-    sudo \
-    tzdata \
-    udev \
     wget \
-    zstd \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
@@ -64,8 +51,15 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
     && rm -rf /tmp/ZED_SDK_Linux.run /usr/local/zed/resources/* \
     && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
 
-RUN curl -fsSL https://pixi.sh/install.sh | \
-    env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
+# ------------------------------------
+# ROS packages used at runtime
+# ------------------------------------
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-vision-opencv \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN useradd trickfire \
     --shell /bin/bash \
@@ -86,19 +80,26 @@ WORKDIR /home/trickfire/trickfire-urc
 # Dev setup
 # ------------------------------------
 
-FROM ubuntu:24.04 AS dev
+FROM ros:jazzy-ros-base AS dev
 
 ENV LANG=en_US.UTF-8 \
-    TZ=UTC \
-    PIXI_HOME=/opt/pixi \
-    PATH=/opt/pixi/bin:${PATH}
+    TZ=UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     ca-certificates \
-    curl \
+    clang-format \
+    clang-tidy \
+    clang-tools \
+    clangd \
+    cmake \
+    gdb \
     git \
     locales \
     openssh-client \
+    pipx \
+    python3-pip \
+    shfmt \
     sudo \
     tzdata \
     && locale-gen en_US.UTF-8 \
@@ -107,8 +108,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://pixi.sh/install.sh | \
-    env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
+# ------------------------------------
+# ROS packages used for development
+# ------------------------------------
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-jazzy-desktop \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-vision-opencv \
+    ros-jazzy-pinocchio \
+    ros-jazzy-coal \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
+    && chmod -R a+rX /opt/pipx
 
 RUN useradd trickfire \
     --shell /bin/bash \
