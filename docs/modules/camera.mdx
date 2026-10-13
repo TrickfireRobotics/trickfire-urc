@@ -1,83 +1,98 @@
 ---
 title: Camera Module
-description: Documentation on the Camera Module and Node
+description: Discover USB cameras, publish compressed streams, and support downstream perception nodes.
 ---
 
-----
 ### Description
 
-This is a low-level module that contains the logic for setup and operation of the Camera node.
-Classes included are CameraNode which handles node setup.
+The camera module is the low-level image source for the rover. It discovers connected cameras with
+OpenCV, creates a ROS 2 node for each one, and publishes compressed JPEG images on a per-camera
+stream.
 
-----
+The implementation lives in `src-platform/camera/camera/camera.py` and exposes the `CameraNode`
+class and helper function `getCameras()`.
 
-### Setup
+### Camera discovery
 
-Upon running the module, the module will attempt to discover all cameras connected to the robot
-and create a node for each automatically. The module will then attempt to publish each camera's feed
-as a compressed image to each camera's individual topic.
+`getCameras()` scans device indices starting at `0` and stops after a short run of ports that fail to
+open. For each working camera, it records the index and returns the list of active camera IDs.
 
-Nodes for each camera are named under this scheme ```"camera_node_{camera}``` with camera being the
-ID of the camera associated to that node.
+This discovery step is intentionally conservative: it checks whether a device can actually be opened
+and read before advertising it as usable. That keeps the robot from spinning up empty or broken camera
+nodes.
 
-----
+### ROS 2 behavior
 
-### Publisher Setup
+Each discovered camera becomes a separate `CameraNode` instance with a node name of the form:
 
-The camera module automatically generates a topic name with the following naming scheme: 
+```text
+camera_node_{camera}
 ```
-/camera_{camera_num}/image
+
+The node publishes a compressed image stream on the topic:
+
+```text
+/camera_{camera_num}/image/compressed
 ```
 
-<Callout type="info" title="Automatic Numbering">
-The ```camera_num``` is automatically generated and starts at index 0, so the first camera 
-discovered will upload its topic as ```/camera_0/image```
+where `camera_num` is the sequential ROS topic index, beginning at `0` for the first discovered
+camera.
+
+<Callout type="info" title="Important behavior">
+The OpenCV device index and the ROS topic index are not always the same value. The ROS topic name is
+assigned by the order in which cameras are discovered, starting at `0`.
 </Callout>
 
-The publisher will attempt to upload the image feed every 0.1 seconds (10 hz)
+The publisher sends frames at a fixed rate of 10 Hz by creating a timer with a 0.1 second period.
 
-----
-## Public Functions
+### Setup and launch
 
-### getCameras
+Launch the camera node with:
+
+```bash
+ros2 run camera camera
+```
+
+This process auto-discovers all available cameras and publishes one stream per detected device.
+Other nodes, such as the AR tag detection node, can then subscribe to the image topic for the
+relevant camera.
+
+## Public functions
+
+### `getCameras()`
 
 ```python
 getCameras() -> list[int]
 ```
 
-This function returns a list of active camera ID's to the caller. It does this by iterating through
-ports 0 to n, with n being the last port found before reaching the ```NON_WORKING_PORT_THRESHOLD```
-(6 at the time of writing) and attempting to open it via ```cv.VideoCapture(dev_port)```. 
-If it's able to be opened and read, it will append itself to ```working_ports```, release the camera
-and move onto the next one, or finish detection.
+Returns a list of active camera device indices. It loops through likely device numbers, uses
+`cv.VideoCapture(dev_port)` to test each one, and appends only ports that successfully read frames.
 
-
-### CameraNode.destroy_node
+### `CameraNode.destroy_node()`
 
 ```python
 destroy_node(self) -> None
 ```
 
-This function overrides the existing ```Node.destroy_node(self)``` function inherited from the 
-```Node``` class. On calling, it checks if the camera node has initialized the ```frameCapture```
-and if the camera has been opened via cv. if so, it releases the camera back to ROS and calls the 
-original ```destroy_node``` function (```super().destroy_node```)
+This override ensures the hardware stream is released before the base ROS `destroy_node()` method is
+called.
 
-----
+## Internal behavior
 
-## Private Functions
-
-<Callout type="warn" title="Accessing Private Functions">
-    These functions should only be called within the ```CameraNode``` class.
-</Callout>
-
-### CameraNode._publishCameraFrame
+### `CameraNode._publishCameraFrame()`
 
 ```python
 _publishCameraFrame(self) -> None
 ```
-This function locks the thread and attempts to call ```frameCapture.read()```. If a frame is 
-returned (as signified from the value of ```ret```), it will then generate a topic message by
-converting the frame into a compressed jpeg. It will then add the timestamp, and ```frame_id``` 
-(the id being equivilant to ```f"camera_{self._camera_id}_optical_frame"```) then publish the
-msg
+
+This method reads a frame from the camera, converts it to a JPEG with `cv_bridge`, stamps it with the
+current ROS time, and publishes the compressed message.
+
+The frame metadata includes the camera optical frame ID:
+
+```text
+camera_{self._camera_id}_optical_frame
+```
+
+This is the frame name used by downstream consumers when they need to reference the image in ROS TF or
+pose calculations.

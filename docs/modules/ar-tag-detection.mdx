@@ -1,111 +1,127 @@
 ---
 title: AR Tag Detection Module
-description: Documentation on the AR Tag Detection Module and Node
+description: Detect ArUco markers from compressed camera frames and publish tag IDs, corners, and poses.
 ---
 
-----
 ### Description
 
-This is a low-level/medium-level module that contains the logic for detecting ArUco fiducial
-markers in compressed camera frames and publishing the results as ROS 2 topics. Classes included
-are `TagDetectionLogic`, which performs OpenCV-based detection and marker corner processing, and
-`ArTagDetectionNode`, which hooks the logic into a ROS node, subscriptions, and publishers.
+The AR tag detection module reads a compressed image stream, detects ArUco markers with OpenCV, and
+publishes the results to ROS 2 topics. It is designed to work with the camera module and a calibrated
+camera model.
 
-----
+The implementation is in `src-autonomy/ar_tag_detection/ar_tag_detection/ar_tag_detection.py`.
 
-### Setup
+### Required inputs
 
-When launched, the node will create a subscriber to the configured camera image topic. By default it
-subscribes to `/camera_0/image/compressed`, but this can be changed by passing `--camera-id N`
-when starting the node:
+A valid camera stream must already be publishing on the ROS graph before the tag node is launched.
+By default, the node listens on:
 
-`ros2 run ar_tag_detection ar_tag_detection -- --camera-id N`
+```text
+/camera_0/image/compressed
+```
 
-where `N` is the camera index. If no value is provided, it defaults to `0`.
+You can override the camera index with:
 
-The node publishes detection results to topics under `/camera_{camera_id}/tags`, including the
-annotated image, the list of detected IDs, and the corner coordinates for each marker. A valid
-camera node must already be publishing compressed images to the ROS graph for detection to work.
+```bash
+ros2 run ar_tag_detection ar_tag_detection -- --camera-id 2
+```
 
-<Callout type="error" title="Important Note">
-    It is important to note that in order to launch this node, a valid camera node is required to be
-    operating and publishing to the ROS.
+For a non-default calibration file, pass:
+
+```bash
+ros2 run ar_tag_detection ar_tag_detection -- --camera-id 0 --calibration-file /path/to/camera_calibration.json
+```
+
+If no calibration file is provided, the code attempts to use `camera_calibration.json` from the current
+working directory.
+
+<Callout type="error" title="Calibration is required">
+The tag detector uses OpenCV's `cv.solvePnP` and therefore needs a valid camera calibration file that
+contains both `camera_matrix` and `dist_coeffs`.
 </Callout>
 
-----
+### Published topics
 
-### Publisher Setup
-
-The AR Detection Module automatically generates topic names based on the `camera_id` provided on
-initialization.
+The detector builds all topic names under `/camera_{camera_id}/tags`.
 
 <Accordions>
-    <Accordion title="Tag Detection Topic">
-        When a valid ArUco tag is detected, the node publishes the annotated frame with drawn markers
-        to `/camera_{camera_id}/tags`.
+    <Accordion title="Annotated image">
+        `/camera_{camera_id}/tags` publishes the annotated frame with detected marker outlines drawn on it.
     </Accordion>
-    <Accordion title="Tag ID Topic">
-        Each detected marker's ID is published as an `Int32MultiArray` on
-        `/camera_{camera_id}/tags/ids`.
+    <Accordion title="Detected IDs">
+        `/camera_{camera_id}/tags/ids` publishes a flattened `Int32MultiArray` with the detected tag IDs.
     </Accordion>
-    <Accordion title="Tag Corners Topic">
-        Each detected tag's four corner coordinates are published as flattened `Int32MultiArray`
-        data on `/camera_{camera_id}/tags/tag_corners`.
+    <Accordion title="Marker corners">
+        `/camera_{camera_id}/tags/tag_corners` publishes each tag's four corners in the order top-left,
+        top-right, bottom-right, bottom-left.
+    </Accordion>
+    <Accordion title="Marker poses">
+        `/camera_{camera_id}/tags/tag_poses` publishes a `PoseArray` containing the 6-DoF pose of each detected
+        tag relative to the camera.
     </Accordion>
 </Accordions>
 
-----
+### Processing flow
 
-### Subscriber Setup
+Each incoming compressed frame triggers `ArTagDetectionNode.frame_callback()`. That callback rate-limits
+processing with `process_rate_hz` and forwards the message to `TagDetectionLogic.feedFrame()`.
 
-The node subscribes to the compressed image topic associated with the selected camera, for example
-`/camera_{camera_id}/image/compressed`. Each new image triggers `ArTagDetectionNode.frame_callback`,
-which rate-limits processing using the `process_rate_hz` parameter and then passes the frame to
-`TagDetectionLogic.feedFrame`.
+`feedFrame()` does the following:
 
-----
+1. Converts the compressed image to a BGR OpenCV image.
+2. Detects ArUco markers with `cv.aruco.ArucoDetector`.
+3. Draws markers on the frame.
+4. Flattens the detected IDs and corner arrays for publishing.
+5. Solves PnP for each tag to estimate its pose.
+6. Publishes the processed image, tag IDs, corners, and pose list.
 
-## Public Functions
+## Public functions
 
-### TagDetectionLogic.feedFrame
+### `TagDetectionLogic.feedFrame()`
 
 ```python
-feedFrame(self, frame: CompressedImage) -> tuple[CompressedImage, Int32MultiArray, Int32MultiArray]
+feedFrame(self, frame: CompressedImage) -> tuple[CompressedImage, Int32MultiArray, Int32MultiArray, list[Pose]]
 ```
 
-This function accepts a compressed camera frame, converts it to a BGR OpenCV image, runs ArUco
-marker detection, and returns the annotated frame plus arrays containing detected tag IDs and corner
-coordinates. If one or more markers are found, it draws the marker outlines on the image,
-flattens the `ids` array, and converts each tag's four corners into a list of `[x, y]` values for
-publishing.
+This method accepts a compressed camera frame, detects markers, and returns:
 
-### ArTagDetectionNode.frame_callback
+- the annotated compressed image,
+- an `Int32MultiArray` of tag IDs,
+- an `Int32MultiArray` of flattened corner coordinates,
+- a list of ROS `Pose` objects for each tag.
+
+### `ArTagDetectionNode.frame_callback()`
 
 ```python
 frame_callback(self, msg: CompressedImage) -> None
 ```
 
-This callback is triggered when a new compressed image is received on the configured camera topic. It
-enforces the configured `process_rate_hz` throttle, updates the last processed timestamp, calls
-`TagDetectionLogic.feedFrame`, and then publishes the resulting image, tag IDs, and tag corner
-arrays to their respective topics.
+This callback is triggered when a new frame arrives on the subscribed camera topic. It enforces the
+configured frame throttle and publishes the results to the configured tag topics.
 
-----
+## Private helpers
 
-## Private Functions
-
-<Callout type="warn" title="Accessing Private Functions">
-    These functions should only be called within the `TagDetectionLogic` class.
-</Callout>
-
-### TagDetectionLogic._handleValidTagCorners
+### `TagDetectionLogic._handleValidTagCorners()`
 
 ```python
 _handleValidTagCorners(self, corners: np.ndarray) -> tuple[Point2D, Point2D, Point2D, Point2D]
 ```
 
-This function reshapes the raw corner data returned by OpenCV into a consistent 4-corner ordering:
-top-left, top-right, bottom-right, and bottom-left. Each corner is converted from floating-point
-OpenCV coordinates into integer `(x, y)` tuples for downstream publishing and logging.
+This helper normalizes the raw OpenCV corner array to a consistent ordering:
 
+- top-left,
+- top-right,
+- bottom-right,
+- bottom-left.
+
+The output is converted to integer pixel coordinates for downstream publishing and visualization.
+
+### `TagDetectionLogic._rotationMatrixToQuaternion()`
+
+```python
+_rotationMatrixToQuaternion(self, matrix: np.ndarray) -> np.ndarray
+```
+
+Converts a 3x3 rotation matrix into a unit quaternion so the tag pose can be published as a ROS
+`Pose` message.
 ----

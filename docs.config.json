@@ -9,7 +9,8 @@
             "label": "Modules",
             "items": [
                 { "label": "AR Tag detection", "slug": "modules/ar-tag-detection" },
-                { "label": "Camera", "slug": "deployment/camera" }
+                { "label": "Camera", "slug": "deployment/camera" },
+                { "label": "Camera-Calibration", "slug": "modules/camera-calibration"}
             ]
         }
     ]
