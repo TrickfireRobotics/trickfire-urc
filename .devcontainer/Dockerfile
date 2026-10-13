@@ -33,12 +33,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
     wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
     echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
-        > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
     apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" && \
     rm -rf /var/lib/apt/lists/* \
-        /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
-        /etc/apt/preferences.d/nvidia-repo-pin-600 \
-        /etc/apt/trusted.gpg.d/jetson-ota-public.asc
+    /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    /etc/apt/preferences.d/nvidia-repo-pin-600 \
+    /etc/apt/trusted.gpg.d/jetson-ota-public.asc
 
 # ------------------------------------
 # Zed sdk installer
@@ -112,13 +112,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ROS packages used for development
 # ------------------------------------
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install ros2-apt-source && apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-desktop \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
     ros-jazzy-pinocchio \
     ros-jazzy-coal \
+    ros-jazzy-ublox \
     && rm -rf /var/lib/apt/lists/*
 
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
