@@ -206,7 +206,7 @@ class ArTagDetectionNode(Node):
             logger=self.get_logger(),
         )
 
-        self.declare_parameter("image_topic", f"/camera_{camera_id}/image/compressed")
+        self.declare_parameter("image_topic", f"/zed/zed_node/rgb/image_rect_color")
         image_topic = self.get_parameter("image_topic").get_parameter_value().string_value
 
         self.declare_parameter("process_rate_hz", 2.0)
