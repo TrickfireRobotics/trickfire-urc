@@ -61,11 +61,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-vision-opencv \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd trickfire \
-    --shell /bin/bash \
-    --create-home \
-    --no-log-init \
-    -G video \
+RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
+    && groupmod --new-name trickfire ubuntu \
+    && usermod -aG video trickfire \
     && mkdir -p /home/trickfire/trickfire-urc \
     && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
@@ -124,11 +122,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
     && chmod -R a+rX /opt/pipx
 
-RUN useradd trickfire \
-    --shell /bin/bash \
-    --create-home \
-    --no-log-init \
-    -G video \
+RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
+    && groupmod --new-name trickfire ubuntu \
+    && usermod -aG video trickfire \
     && mkdir -p /home/trickfire/trickfire-urc \
     && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
