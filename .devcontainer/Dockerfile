@@ -56,10 +56,11 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
 # ROS packages used at runtime
 # ------------------------------------
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get install ros2-apt-source && apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
+    ros-jazzy-ublox \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd trickfire \
@@ -113,14 +114,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ROS packages used for development
 # ------------------------------------
 
-RUN apt-get install ros2-apt-source && apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-desktop \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
     ros-jazzy-pinocchio \
     ros-jazzy-coal \
-    ros-jazzy-ublox \
     && rm -rf /var/lib/apt/lists/*
 
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
