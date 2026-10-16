@@ -33,14 +33,14 @@ while getopts 'nc' flag; do
 done
 
 log_info "Building '${service}' image"
-if [[ "$no_cache" == true ]]; then
+if [[ $no_cache == true ]]; then
     compose build --no-cache "$service"
 else
     compose build "$service"
 fi
 
 log_info "Starting '${service}' container"
-if [[ "$force_recreate" == true ]]; then
+if [[ $force_recreate == true ]]; then
     compose up -d --force-recreate "$service"
 else
     compose up -d "$service"
