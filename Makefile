@@ -31,10 +31,10 @@ launch:
 	./scripts/launch.sh
 
 container:
-	./scripts/container-launch.sh $(CONTAINER_ARGS)
+	./scripts/container.sh $(CONTAINER_ARGS)
 
 connect:
-	./scripts/connect-to-container.sh
+	./scripts/container.sh -a
 
 format:
 	ruff format src-autonomy src-platform
