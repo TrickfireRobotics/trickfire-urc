@@ -30,6 +30,10 @@ services:
       target: prod
     image: trickfire-urc-prod:latest
     user: trickfire
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    group_add:
+      - "dialout"
     environment:
       TZ: ${TZ:-UTC}
       NVIDIA_VISIBLE_DEVICES: all
