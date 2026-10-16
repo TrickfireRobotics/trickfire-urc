@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     openssh-client \
     wget \
+    zstd \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
