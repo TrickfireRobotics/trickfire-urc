@@ -3,7 +3,7 @@ set -eo pipefail
 
 cd "$(dirname "$0")/.."
 
-readonly launch_package="${LAUNCH_PACKAGE:-trickfire_urc_launch}"
+readonly launch_package="${LAUNCH_PACKAGE:-rover_launch}"
 readonly launch_file="${LAUNCH_FILE:-robot.launch.py}"
 
 if [[ ! -f install/setup.bash ]]; then

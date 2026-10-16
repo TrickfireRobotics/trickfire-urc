@@ -2,7 +2,7 @@
 
 COMPOSE_FILE := .devcontainer/docker-compose.yml
 SERVICE := robot
-LAUNCH_PACKAGE ?= trickfire_urc_launch
+LAUNCH_PACKAGE ?= rover_launch
 LAUNCH_FILE ?= robot.launch.py
 
 .PHONY: help build clean launch container connect format hooks
