@@ -87,6 +87,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     clang-format \
+    python3-opencv \
+    python3-numpy \
     clang-tidy \
     clang-tools \
     clangd \
