@@ -66,6 +66,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
     ros-jazzy-zed-wrapper \
+    nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 USER trickfire
