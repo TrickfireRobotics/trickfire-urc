@@ -115,14 +115,4 @@ RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
     && PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pre-commit \
     && chmod -R a+rX /opt/pipx
 
-RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
-    && groupmod --new-name trickfire ubuntu \
-    && usermod -aG video trickfire \
-    && mkdir -p /home/trickfire/trickfire-urc \
-    && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
-    && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
-    && chmod 0440 /etc/sudoers.d/trickfire
-
 USER trickfire
-COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
-WORKDIR /home/trickfire/trickfire-urc
