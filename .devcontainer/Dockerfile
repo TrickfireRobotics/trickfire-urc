@@ -48,7 +48,7 @@ RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/je
     wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
     echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
     > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
-    apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" && \
+    apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" zstd && \
     rm -rf /var/lib/apt/lists/* \
     /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
     /etc/apt/preferences.d/nvidia-repo-pin-600 \
