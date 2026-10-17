@@ -1,20 +1,9 @@
 # syntax=docker/dockerfile:1
-FROM ros:jazzy-ros-base AS prod
+FROM ros:jazzy-ros-base AS base
 ARG DEBIAN_FRONTEND=noninteractive
-ARG L4T_RELEASE=r39.2
-ARG CUDA_TOOLKIT_PKG=cuda-toolkit-13-2
-ARG ZED_SDK_MAJOR=5
-ARG ZED_SDK_MINOR=5
-ARG ZED_SDK_PATCH=0
-ARG L4T_MAJOR=39
-ARG L4T_MINOR=2
 
 ENV LANG=en_US.UTF-8 \
-    TZ=UTC \
-    PATH=/usr/local/cuda/bin:${PATH} \
-    LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
-    NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    TZ=UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
@@ -26,41 +15,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
-# -----------------------------------
-# Nvidia Jetson
-# -----------------------------------
-
-RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
-    wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
-    echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
-        > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
-    apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" && \
-    rm -rf /var/lib/apt/lists/* \
-        /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
-        /etc/apt/preferences.d/nvidia-repo-pin-600 \
-        /etc/apt/trusted.gpg.d/jetson-ota-public.asc
-
-# ------------------------------------
-# Zed sdk installer
-# ------------------------------------
-
-RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
-    "https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}.${ZED_SDK_PATCH}/l4t${L4T_MAJOR}.${L4T_MINOR}/jetsons" \
-    && chmod +x /tmp/ZED_SDK_Linux.run \
-    && /tmp/ZED_SDK_Linux.run silent skip_tools skip_drivers skip_cuda \
-    && rm -rf /tmp/ZED_SDK_Linux.run /usr/local/zed/resources/* \
-    && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
-
-# ------------------------------------
-# ROS packages used at runtime
-# ------------------------------------
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-jazzy-rosbridge-server \
-    ros-jazzy-cv-bridge \
-    ros-jazzy-vision-opencv \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
     && groupmod --new-name trickfire ubuntu \
     && usermod -aG video trickfire \
@@ -69,24 +23,85 @@ RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
     && chmod 0440 /etc/sudoers.d/trickfire
 
-USER trickfire
 COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
 WORKDIR /home/trickfire/trickfire-urc
 
+# ------------------------------------
+# Rover runtime
+# ------------------------------------
+
+FROM base AS rover
+ARG L4T_RELEASE=r39.2
+ARG CUDA_TOOLKIT_PKG=cuda-toolkit-13-2
+ARG ZED_SDK_MAJOR=5
+ARG ZED_SDK_MINOR=5
+ARG ZED_SDK_PATCH=0
+ARG L4T_MAJOR=39
+ARG L4T_MINOR=2
+ARG ZED_ROS2_WRAPPER_REF=v5.5.0
+
+ENV PATH=/usr/local/cuda/bin:${PATH} \
+    LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
+    NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+
+RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
+    wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
+    echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
+    > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" zstd && \
+    rm -rf /var/lib/apt/lists/* \
+    /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    /etc/apt/preferences.d/nvidia-repo-pin-600 \
+    /etc/apt/trusted.gpg.d/jetson-ota-public.asc
+
+RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
+    "https://download.stereolabs.com/zedsdk/${ZED_SDK_MAJOR}.${ZED_SDK_MINOR}.${ZED_SDK_PATCH}/l4t${L4T_MAJOR}.${L4T_MINOR}/jetsons" \
+    && chmod +x /tmp/ZED_SDK_Linux.run \
+    && /tmp/ZED_SDK_Linux.run silent skip_tools skip_drivers skip_cuda \
+    && rm -rf /tmp/ZED_SDK_Linux.run /usr/local/zed/resources/* \
+    && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-vision-opencv \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi \
+    && rosdep update \
+    && mkdir -p /opt/zed-ros2-wrapper/src \
+    && git clone --depth 1 --branch "${ZED_ROS2_WRAPPER_REF}" \
+        https://github.com/stereolabs/zed-ros2-wrapper.git \
+        /opt/zed-ros2-wrapper/src/zed-ros2-wrapper \
+    && git clone --depth 1 --branch "${ZED_ROS2_WRAPPER_REF}" \
+        https://github.com/stereolabs/zed-ros2-interfaces.git \
+        /opt/zed-ros2-wrapper/src/zed-ros2-interfaces \
+    && . /opt/ros/jazzy/setup.sh \
+    && rosdep install --from-paths /opt/zed-ros2-wrapper/src --ignore-src -r -y \
+    && cd /opt/zed-ros2-wrapper \
+    && colcon build --symlink-install --packages-skip zed_debug \
+    --cmake-args -DCMAKE_BUILD_TYPE=Release -DZED_DIR=/usr/local/zed
+
+USER trickfire
 
 # ------------------------------------
-# Dev setup
+# Devcontainer runtime
 # ------------------------------------
 
-FROM ros:jazzy-ros-base AS dev
-
-ENV LANG=en_US.UTF-8 \
-    TZ=UTC
+FROM base AS dev
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     clang-format \
+    python3-opencv \
+    python3-numpy \
     clang-tidy \
     clang-tools \
     clangd \
@@ -106,10 +121,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
-# ------------------------------------
 # ROS packages used for development
-# ------------------------------------
-
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-desktop \
     ros-jazzy-rosbridge-server \
@@ -123,14 +135,4 @@ RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
     && PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pre-commit \
     && chmod -R a+rX /opt/pipx
 
-RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
-    && groupmod --new-name trickfire ubuntu \
-    && usermod -aG video trickfire \
-    && mkdir -p /home/trickfire/trickfire-urc \
-    && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
-    && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
-    && chmod 0440 /etc/sudoers.d/trickfire
-
 USER trickfire
-COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
-WORKDIR /home/trickfire/trickfire-urc

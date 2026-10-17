@@ -1,0 +1,7 @@
+To generate the camera_matrix and distortian coefficient, place 
+roughly 10-15 different pictures of 
+the same checkerboard image at different angles within this folder
+then run generate_camera_calibration.py
+
+ensure that only photos taken from the wanted camera are placed in this
+directory, if needed, create a new folder and place the old images in there.
