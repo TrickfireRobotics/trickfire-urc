@@ -1,0 +1,6 @@
+// Zenoh config for the sim-side bridge (see sim-bridge.sh).
+// Keep retrying the urc-side bridge instead of exiting, so the sim side can be
+// started before the devcontainer and survives devcontainer restarts.
+{
+  connect: { timeout_ms: -1, exit_on_failure: false },
+}

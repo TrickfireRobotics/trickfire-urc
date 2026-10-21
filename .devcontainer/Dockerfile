@@ -101,6 +101,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     sudo \
     tzdata \
+    unzip \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
@@ -109,6 +110,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN curl -fsSL https://pixi.sh/install.sh | \
     env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
+
+# ------------------------------------
+# Zenoh bridge to the simulator (see docs/simulation.mdx)
+# ------------------------------------
+
+# Must match VERSION in sim-bridge.sh.
+ARG ZENOH_BRIDGE_VERSION=1.10.1
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+        amd64) target=x86_64-unknown-linux-gnu ;; \
+        arm64) target=aarch64-unknown-linux-gnu ;; \
+        *) echo "unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL -o /tmp/zenoh-bridge.zip \
+        "https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds/releases/download/${ZENOH_BRIDGE_VERSION}/zenoh-plugin-ros2dds-${ZENOH_BRIDGE_VERSION}-${target}-standalone.zip" \
+    && unzip -oq /tmp/zenoh-bridge.zip zenoh-bridge-ros2dds -d /usr/local/bin \
+    && chmod +x /usr/local/bin/zenoh-bridge-ros2dds \
+    && rm /tmp/zenoh-bridge.zip
 
 RUN useradd trickfire \
     --shell /bin/bash \

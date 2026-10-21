@@ -6,6 +6,7 @@
     "workspaceFolder": "/home/trickfire/trickfire-urc",
     "shutdownAction": "stopCompose",
     "postCreateCommand": "pixi install",
+    "postStartCommand": "setsid -f pixi run sim-bridge > /tmp/sim-bridge.log 2>&1 < /dev/null",
     "customizations": {
         "vscode": {
             "extensions": [
