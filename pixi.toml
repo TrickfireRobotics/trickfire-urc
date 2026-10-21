@@ -13,6 +13,11 @@ ros-jazzy-desktop = "*"
 ros-jazzy-rosbridge-server = "*"
 colcon-common-extensions = "*"
 
+[feature.ros.tasks]
+# Devcontainer side of the simulator bridge; the binary comes from the dev image.
+# Started automatically by postStartCommand. See docs/simulation.mdx.
+sim-bridge = "zenoh-bridge-ros2dds router -l tcp/0.0.0.0:7447 --no-multicast-scouting"
+
 [feature.cpp-tools.dependencies]
 clang-tools = "*"
 

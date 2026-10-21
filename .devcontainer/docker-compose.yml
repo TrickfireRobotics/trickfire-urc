@@ -4,11 +4,17 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
       target: dev
-    image: trickfire-urc-dev:latest
+    image: trickfire-urc:latest
     container_name: trickfire-urc
     user: trickfire
     environment:
       TZ: ${TZ:-UTC}
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+    # Zenoh bridge to the simulator, started in-container by postStartCommand,
+    # since DDS multicast discovery can't cross the Docker boundary.
+    # See docs/simulation.mdx.
+    ports:
+      - "127.0.0.1:7447:7447"
     volumes:
       - type: bind
         source: ..
@@ -17,9 +23,9 @@ services:
     stdin_open: true
     tty: true
 
-  # Jetson AGX Orin running JetPack 7.2:
-  # docker compose -f .devcontainer/docker-compose.yaml run --build --rm prod
-  # Camera device mounts depend on the camera model
+  # Jetson AGX Orin running JetPack 7.2 (L4T r39.2):
+  # docker compose -f .devcontainer/docker-compose.yml run --build --rm prod
+  # Camera device mounts depend on the camera model.
   prod:
     profiles: [prod]
     platform: linux/arm64
@@ -29,6 +35,7 @@ services:
       dockerfile: .devcontainer/Dockerfile
       target: prod
     image: trickfire-urc-prod:latest
+    user: trickfire
     environment:
       TZ: ${TZ:-UTC}
       NVIDIA_VISIBLE_DEVICES: all
@@ -36,7 +43,7 @@ services:
     volumes:
       - type: bind
         source: ..
-        target: /trickfire-urc
-    working_dir: /trickfire-urc
+        target: /home/trickfire/trickfire-urc
+    working_dir: /home/trickfire/trickfire-urc
     stdin_open: true
     tty: true
