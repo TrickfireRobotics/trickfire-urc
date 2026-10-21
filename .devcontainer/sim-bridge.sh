@@ -4,24 +4,21 @@
 # runs on each side and forwards topics/services/actions over TCP port 7447.
 #
 # Run from a HOST terminal, not inside the devcontainer. The urc-side bridge
-# (sim-bridge compose service) starts with the devcontainer automatically.
+# runs inside the devcontainer (`pixi run sim-bridge`) and starts with it.
 #
 #   sim-bridge.sh native   run the sim-side bridge on this host (sim via pixi)
 #   sim-bridge.sh docker   run the sim-side bridge in the sim's container
-#   sim-bridge.sh up|down  start/stop the urc-side bridge (only needed when
-#                          the devcontainer was started without it)
-# Extra args to native/docker are passed to zenoh-bridge-ros2dds.
+# Extra args are passed to zenoh-bridge-ros2dds.
 #
 # Env: ROS_DOMAIN_ID (default 0), SIM_CONTAINER (default simulations),
 #      ZENOH_ENDPOINT (override where the sim-side bridge connects).
 set -euo pipefail
 
-# Must match the sim-bridge image tag in docker-compose.yml.
+# Must match ZENOH_BRIDGE_VERSION in the Dockerfile.
 VERSION=1.10.1
 IMAGE="eclipse/zenoh-bridge-ros2dds:${VERSION}"
-URC_CONTAINER=trickfire-urc
+CONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/sim-bridge.json5"
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}"
 export ROS_DISTRO=jazzy
 
@@ -35,16 +32,6 @@ die() {
 if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
 	die "run this from a host terminal (where the sim runs), not inside a container"
 fi
-
-# Join the devcontainer's compose project so the bridge shares its network.
-compose() {
-	local project
-	command -v docker >/dev/null || die "docker CLI not found on this host"
-	project="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' \
-		"$URC_CONTAINER" 2>/dev/null)" ||
-		die "container '$URC_CONTAINER' is not running - open the devcontainer first"
-	docker compose -p "$project" -f "$script_dir/docker-compose.yml" "$@"
-}
 
 native_target() {
 	case "$(uname -s)/$(uname -m)" in
@@ -80,18 +67,11 @@ mode="${1:-native}"
 shift || true
 
 case "$mode" in
-up)
-	compose up -d sim-bridge
-	log "urc-side bridge listening on 127.0.0.1:7447 (domain $ROS_DOMAIN_ID)"
-	;;
-down)
-	compose stop sim-bridge
-	;;
 native)
 	bin="$(native_bin)"
 	endpoint="${ZENOH_ENDPOINT:-tcp/127.0.0.1:7447}"
 	log "bridging host ROS 2 (domain $ROS_DOMAIN_ID) -> $endpoint"
-	exec "$bin" client -e "$endpoint" --no-multicast-scouting "$@"
+	exec "$bin" client -c "$CONFIG" -e "$endpoint" --no-multicast-scouting "$@"
 	;;
 docker)
 	sim="${SIM_CONTAINER:-simulations}"
@@ -100,10 +80,11 @@ docker)
 	log "bridging '$sim' ROS 2 (domain $ROS_DOMAIN_ID) -> $endpoint"
 	exec docker run --rm -it --name sim-bridge-sim \
 		--network "container:$sim" -e ROS_DOMAIN_ID -e ROS_DISTRO \
-		"$IMAGE" client -e "$endpoint" --no-multicast-scouting "$@"
+		-v "$CONFIG:/sim-bridge.json5:ro" \
+		"$IMAGE" client -c /sim-bridge.json5 -e "$endpoint" --no-multicast-scouting "$@"
 	;;
 *)
-	sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+	sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
 	exit 1
 	;;
 esac
