@@ -6,8 +6,13 @@ ENV LANG=en_US.UTF-8 \
     TZ=UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
     locales \
     openssh-client \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-vision-opencv \
     wget \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
@@ -39,6 +44,7 @@ ARG ZED_SDK_PATCH=0
 ARG L4T_MAJOR=39
 ARG L4T_MINOR=2
 ARG ZED_ROS2_WRAPPER_REF=v5.5.0
+ARG ZED_ROS2_INTERFACES_REF=5.5.0
 
 ENV PATH=/usr/local/cuda/bin:${PATH} \
     LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
@@ -63,13 +69,8 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
     && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    git \
     python3-colcon-common-extensions \
     python3-rosdep \
-    ros-jazzy-rosbridge-server \
-    ros-jazzy-cv-bridge \
-    ros-jazzy-vision-opencv \
     nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -79,11 +80,13 @@ RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init
     && git clone --depth 1 --branch "${ZED_ROS2_WRAPPER_REF}" \
         https://github.com/stereolabs/zed-ros2-wrapper.git \
         /opt/zed-ros2-wrapper/src/zed-ros2-wrapper \
-    && git clone --depth 1 --branch "${ZED_ROS2_WRAPPER_REF}" \
+    && git clone --depth 1 --branch "${ZED_ROS2_INTERFACES_REF}" \
         https://github.com/stereolabs/zed-ros2-interfaces.git \
         /opt/zed-ros2-wrapper/src/zed-ros2-interfaces \
     && . /opt/ros/jazzy/setup.sh \
+    && apt-get update \
     && rosdep install --from-paths /opt/zed-ros2-wrapper/src --ignore-src -r -y \
+    && rm -rf /var/lib/apt/lists/* \
     && cd /opt/zed-ros2-wrapper \
     && colcon build --symlink-install --packages-skip zed_debug \
     --cmake-args -DCMAKE_BUILD_TYPE=Release -DZED_DIR=/usr/local/zed
@@ -97,38 +100,27 @@ USER trickfire
 FROM base AS dev
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
     ca-certificates \
     clang-format \
-    python3-opencv \
-    python3-numpy \
     clang-tidy \
     clang-tools \
     clangd \
     cmake \
     gdb \
-    git \
-    locales \
-    openssh-client \
     pipx \
+    python3-numpy \
+    python3-opencv \
     python3-pip \
     shfmt \
     sudo \
     tzdata \
-    && locale-gen en_US.UTF-8 \
-    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
-    && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
-    && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
 # ROS packages used for development
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ros-jazzy-desktop \
-    ros-jazzy-rosbridge-server \
-    ros-jazzy-cv-bridge \
-    ros-jazzy-vision-opencv \
-    ros-jazzy-pinocchio \
     ros-jazzy-coal \
+    ros-jazzy-desktop \
+    ros-jazzy-pinocchio \
     && rm -rf /var/lib/apt/lists/*
 
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
