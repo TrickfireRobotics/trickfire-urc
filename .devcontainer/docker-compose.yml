@@ -33,6 +33,7 @@ services:
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
     group_add:
+      - "uucp"
       - "dialout"
     environment:
       TZ: ${TZ:-UTC}
