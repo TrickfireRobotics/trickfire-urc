@@ -31,7 +31,7 @@ services:
     image: trickfire-urc-prod:latest
     user: trickfire
     devices:
-      - /dev/ttyACM0:/dev/ttyACM0
+      - "/dev/bus/usb:/dev/bus/usb"
     group_add:
       - "dialout"
     environment:
