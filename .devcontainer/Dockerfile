@@ -97,7 +97,10 @@ USER trickfire
 # Devcontainer runtime
 # ------------------------------------
 
-FROM base AS dev
+FROM rover AS dev
+
+# Switch back to root to install dev tools
+USER root
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -127,4 +130,5 @@ RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
     && PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pre-commit \
     && chmod -R a+rX /opt/pipx
 
+# Switch back to the non-root user
 USER trickfire
