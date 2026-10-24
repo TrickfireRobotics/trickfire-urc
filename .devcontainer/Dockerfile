@@ -49,7 +49,8 @@ ARG ZED_ROS2_INTERFACES_REF=5.5.0
 ENV PATH=/usr/local/cuda/bin:${PATH} \
     LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
     NVIDIA_VISIBLE_DEVICES=all \
-    NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+    NVIDIA_DRIVER_CAPABILITIES=compute,video,utility \
+    ZED_DIR=/usr/local/zed
 
 RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
     wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
