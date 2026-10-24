@@ -28,17 +28,17 @@ services:
     tty: true
 
   # Jetson AGX Orin running JetPack 7.2 (L4T r39.2):
-  # docker compose -f .devcontainer/docker-compose.yml run --build --rm prod
+  # docker compose -f .devcontainer/docker-compose.yml run --build --rm rover
   # Camera device mounts depend on the camera model.
-  prod:
-    profiles: [prod]
+  rover:
+    profiles: [rover]
     platform: linux/arm64
     runtime: nvidia
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-      target: prod
-    image: trickfire-urc-prod:latest
+      target: rover
+    image: trickfire-urc-rover:latest
     user: trickfire
     environment:
       TZ: ${TZ:-UTC}

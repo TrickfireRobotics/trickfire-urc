@@ -1,0 +1,47 @@
+---
+title: Getting Started
+description: Set up a development environment for the Apollo rover software.
+---
+
+This is the software for **Apollo**, Trickfire Robotics' second rover for the [University Rover
+Challenge](https://urc.marssociety.org/), built on [ROS 2 Humble](https://docs.ros.org/en/humble/).
+
+<Callout type="idea" title="Looking for Viator?">
+    These docs are for Trickfire's second rover Apollo. The first URC rover has its own
+    documentation.
+</Callout>
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Visual Studio Code](https://code.visualstudio.com/) with the
+  [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+  extension
+
+Development happens inside a Docker container so every contributor gets the same ROS 2 Humble
+environment, regardless of host OS.
+
+## Set up the dev container
+
+1. Clone the repo (with submodules):
+
+    ```bash title="Terminal"
+    git clone --recurse-submodules https://github.com/TrickfireRobotics/trickfire-urc.git
+    ```
+
+2. Open the folder in VS Code and choose **Reopen in Container** when prompted (or run
+   **Dev Containers: Reopen in Container** from the command palette). This uses
+   `.devcontainer/docker-compose.yml` to build `.devcontainer/Dockerfile`
+
+## Build and launch
+
+TODO
+
+## Formatting and linting
+
+Python is formatted/linted with [Ruff](https://docs.astral.sh/ruff/) and type-checked with
+[mypy](https://mypy-lang.org/); shell scripts are formatted with
+[shfmt](https://github.com/mvdan/sh). Install the recommended VS Code extensions when prompted,
+or run everything manually:
+
+TODO COMMAND
