@@ -92,6 +92,18 @@ RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init
     && colcon build --symlink-install --packages-skip zed_debug \
     --cmake-args -DCMAKE_BUILD_TYPE=Release -DZED_DIR=/usr/local/zed
 
+ENV CMAKE_PREFIX_PATH=/usr/local/zed:/opt/zed-ros2-wrapper/install/zed_msgs:/opt/zed-ros2-wrapper/install/zed_components:/opt/zed-ros2-wrapper/install/zed_wrapper \
+    LD_LIBRARY_PATH=/usr/local/zed/lib:${LD_LIBRARY_PATH}
+
+RUN chmod -R a+rX /usr/local /opt/zed-ros2-wrapper \
+    && mkdir -p /home/trickfire/.colcon \
+    && printf 'build:\n  packages-skip:\n    - zed_debug\n' > /home/trickfire/.colcon/defaults.yaml \
+    && chown -R trickfire:trickfire /usr/local/zed/settings /home/trickfire/.colcon \
+    && echo 'export ZED_DIR=/usr/local/zed' >> /home/trickfire/.bashrc \
+    && echo 'export CMAKE_PREFIX_PATH=/usr/local/zed:${CMAKE_PREFIX_PATH}' >> /home/trickfire/.bashrc \
+    && echo 'export LD_LIBRARY_PATH=/usr/local/zed/lib:${LD_LIBRARY_PATH}' >> /home/trickfire/.bashrc \
+    && echo 'if [ -f /opt/zed-ros2-wrapper/install/setup.bash ]; then source /opt/zed-ros2-wrapper/install/setup.bash; fi' >> /home/trickfire/.bashrc
+
 USER trickfire
 
 # ------------------------------------
