@@ -102,7 +102,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     shfmt \
     sudo \
     tzdata \
-    && locale-gen en_US.UTF-8 \
+		&& locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo "${TZ}" > /etc/timezone \
@@ -120,6 +120,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-pinocchio \
     ros-jazzy-coal \
     && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------
+# Socketcan deps
+# ------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential \
+		cmake \
+		ninja-build \
+		pkg-config \
+		libsocketcan-dev \
+		libgtest-dev \
+		libgmock-dev \
+		iproute2 \
+		kmod \
+		can-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+
+
 
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
     && chmod -R a+rX /opt/pipx

@@ -5,10 +5,24 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
-# uncomment the following section in order to fill in further dependencies
-# manually. find_package(<dependency> REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(ak-series REQUIRED)
+
+add_executable(can_ak_node src/can-ak.cpp include/can-ak/can-ak.h)
+target_compile_features(can_ak_node PRIVATE cxx_std_17)
+target_include_directories(
+  can_ak_node PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+# ak_series_lib comes from ak-series's exported targets, under the ak-series::
+# namespace. It pulls in libsocketcan and its own include dir transitively.
+target_link_libraries(can_ak_node PRIVATE rclcpp::rclcpp
+                                          ak-series::ak_series_lib)
+
+# Required for `ros2 run can-ak can_ak_node` to find the executable
+install(TARGETS can_ak_node DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

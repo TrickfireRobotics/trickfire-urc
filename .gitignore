@@ -15,5 +15,8 @@ install/
 log/
 build/
 
+# lsp
+.cache/
+
 # test generated files
 src-autonomy/ar_tag_detection/test/output_images/
