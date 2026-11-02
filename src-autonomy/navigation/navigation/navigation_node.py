@@ -1,136 +1,127 @@
-"""Accept rover pose goals and run them through Nav2's action interface."""
+"""Mission state machine: takes GNSS goals and runs them through the navigation actions."""
 
-import threading
+import math
 from enum import Enum
 
 import rclpy
-from geometry_msgs.msg import PoseStamped
-from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
-from rclpy.executors import SingleThreadedExecutor
+from action_msgs.msg import GoalStatus
+from geographic_msgs.msg import GeoPoint
+from navigation_interfaces.action import NavigateToGPS
+from rclpy.action import ActionClient
 from rclpy.node import Node
-from rclpy.parameter import Parameter
 from sensor_msgs.msg import NavSatFix
+
+ERROR_NAMES = {
+    getattr(NavigateToGPS.Result, name): name
+    for name in (
+        "NONE",
+        "NO_GPS_FIX",
+        "CONVERSION_FAILED",
+        "NAV2_REJECTED",
+        "NAV2_FAILED",
+        "GOAL_BLOCKED",
+        "TIMED_OUT",
+    )
+}
 
 
 class MissionState(Enum):
     """Enum class for mission state"""
 
     IDLE = 0
-    NAVIGATING = 1
+    NAVIGATING_GPS = 1
     COMPLETE = 2
+    FAILED = 3
 
 
 class NavigationNode(Node):
-    """Node to handle navigation dispatch and goal handling"""
+    """Node to sequence mission goals through the navigation action servers"""
 
     def __init__(self):
         super().__init__("navigation_node")
-        self.declare_parameter("ground_truth_localization", False)
-        self.ground_truth_localization = self.get_parameter("ground_truth_localization").value
         self.state = MissionState.IDLE
-        self._pending_goal = None
-        self._goal_lock = threading.Lock()
-        self._goal_event = threading.Event()
-        self._stop_event = threading.Event()
-        self.latest_gps_fix = None
+        # Latest goal request, and its handle once accepted. Responses for anything older belong
+        # to goals the server has already replaced, so they're ignored.
+        self._request = None
+        self._goal_handle = None
 
-        self.create_subscription(PoseStamped, "/goal/pose", self._on_goal, 10)
-        self.create_subscription(NavSatFix, "/gps/fix", self._on_gps_fix, 10)
+        self._gps_client = ActionClient(self, NavigateToGPS, "navigate_to_gps")
         self.create_subscription(NavSatFix, "/goal/gnss", self._on_gnss_goal, 10)
-        if not self.ground_truth_localization:
-            self.create_subscription(PoseStamped, "/pose/current", self._on_current_pose, 10)
 
-        self.navigator = BasicNavigator()
-        if self.get_parameter("use_sim_time").value:
-            self.navigator.set_parameters([Parameter("use_sim_time", value=True)])
-        self._initial_pose_sent = False
-        self._worker = threading.Thread(target=self._run, name="navigation_worker", daemon=True)
-        self._worker.start()
+    def _set_state(self, state: MissionState):
+        if state != self.state:
+            self.get_logger().info(f"{self.state.name} -> {state.name}")
+            self.state = state
 
-    def _on_current_pose(self, pose: PoseStamped):
-        if not self._initial_pose_sent:
-            self.navigator.setInitialPose(pose)
-            self._initial_pose_sent = True
-
-    def _on_goal(self, pose: PoseStamped):
-        expected_frame = "odom" if self.ground_truth_localization else "map"
-        if pose.header.frame_id != expected_frame:
+    def _on_gnss_goal(self, fix: NavSatFix):
+        if not (math.isfinite(fix.latitude) and math.isfinite(fix.longitude)):
             self.get_logger().error(
-                f"Goal frame must be '{expected_frame}', received '{pose.header.frame_id}'"
+                f"Ignoring GNSS goal at invalid position ({fix.latitude}, {fix.longitude})"
             )
             return
-        with self._goal_lock:
-            self._pending_goal = pose
-        self._goal_event.set()
+        if not self._gps_client.server_is_ready():
+            self.get_logger().error("The navigate_to_gps action server isn't available")
+            self._set_state(MissionState.FAILED)
+            return
 
-    def _on_gps_fix(self, fix: NavSatFix):
-        self.latest_gps_fix = fix
+        self.get_logger().info(f"GNSS goal ({fix.latitude:.7f}, {fix.longitude:.7f})")
+        goal = NavigateToGPS.Goal(
+            target=GeoPoint(latitude=fix.latitude, longitude=fix.longitude, altitude=fix.altitude)
+        )
+        # The server replaces any goal in progress, so there's nothing to cancel first
+        self._goal_handle = None
+        self._request = self._gps_client.send_goal_async(
+            goal, feedback_callback=self._on_gps_feedback
+        )
+        self._request.add_done_callback(self._on_goal_response)
+        self._set_state(MissionState.NAVIGATING_GPS)
 
-    def _on_gnss_goal(self, _fix: NavSatFix):
-        self.get_logger().warning(
-            "GNSS goals need a geographic-to-local transform; send /goal/pose for now"
+    def _on_goal_response(self, request):
+        if request is not self._request:
+            return
+        goal_handle = request.result()
+        if not goal_handle.accepted:
+            self.get_logger().error("navigate_to_gps rejected the goal")
+            self._set_state(MissionState.FAILED)
+            return
+        self._goal_handle = goal_handle
+        goal_handle.get_result_async().add_done_callback(
+            lambda future: self._on_result(goal_handle, future)
         )
 
-    def _take_goal(self):
-        with self._goal_lock:
-            goal = self._pending_goal
-            self._pending_goal = None
-            self._goal_event.clear()
-            return goal
+    def _on_gps_feedback(self, msg):
+        self.get_logger().info(
+            f"{msg.feedback.distance_remaining:.1f} m to go", throttle_duration_sec=5.0
+        )
 
-    def _run(self):
-        self.get_logger().info("Waiting for Nav2 to activate")
-        if self.ground_truth_localization:
-            # The simulator publishes odom -> base_link directly. No AMCL or initial pose.
-            self.navigator.waitUntilNav2Active(localizer="robot_localization")
+    def _on_result(self, goal_handle, future):
+        if goal_handle is not self._goal_handle:
+            return
+        self._goal_handle = None
+        response = future.result()
+        if response.status == GoalStatus.STATUS_SUCCEEDED:
+            self.get_logger().info("GNSS goal reached")
+            self._set_state(MissionState.COMPLETE)
+        elif response.status == GoalStatus.STATUS_CANCELED:
+            self.get_logger().info("GNSS goal canceled")
+            self._set_state(MissionState.IDLE)
         else:
-            self.navigator.waitUntilNav2Active()
-        self.get_logger().info("Ready for /goal/pose")
-
-        while not self._stop_event.is_set() and rclpy.ok():
-            if not self._goal_event.wait(timeout=0.2):
-                continue
-            goal = self._take_goal()
-            if goal is None:
-                continue
-            self.state = MissionState.NAVIGATING
-            if not self.navigator.goToPose(goal):
-                self.state = MissionState.IDLE
-                self.get_logger().error("Nav2 rejected the navigation goal")
-                continue
-            while not self._stop_event.is_set() and rclpy.ok():
-                if self._goal_event.is_set():
-                    self.navigator.cancelTask()
-                    break
-                if self.navigator.isTaskComplete():
-                    result = self.navigator.getResult()
-                    if result == TaskResult.SUCCEEDED:
-                        self.state = MissionState.COMPLETE
-                        self.get_logger().info("Navigation goal reached")
-                    else:
-                        self.state = MissionState.IDLE
-                        self.get_logger().warning(f"Navigation ended: {result.name}")
-                    break
-                self._stop_event.wait(0.1)
-
-    def stop(self):
-        self._stop_event.set()
-        self._goal_event.set()
+            result = response.result
+            error = ERROR_NAMES.get(result.error_code, str(result.error_code))
+            self.get_logger().error(f"GNSS goal failed ({error}): {result.error_msg}")
+            self._set_state(MissionState.FAILED)
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = NavigationNode()
-    executor = SingleThreadedExecutor()
     try:
-        rclpy.spin(node, executor=executor)
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
-        node.stop()
-        executor.shutdown()
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

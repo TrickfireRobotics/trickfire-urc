@@ -1,0 +1,99 @@
+# robot_localization's dual-EKF setup:
+#   ekf_filter_node_odom  odom -> base_footprint. Dead-reckons from ZED visual odometry and IMU
+#                         heading: smooth and continuous, but drifts.
+#   ekf_filter_node_map   map -> odom. Fuses the same inputs plus GPS, so map poses stay
+#                         earth-anchored while odom stays smooth for the controller.
+#   navsat_transform      Turns GPS fixes into map-frame odometry for the map EKF, and serves
+#                         fromLL / toLL for converting goals between lat/lon and map.
+#                         Its datum (heading) comes from the gps_heading_init node.
+
+ekf_filter_node_odom:
+  ros__parameters:
+    frequency: 30.0
+    # Nav2 plans in 2D, so ignore z, roll and pitch
+    two_d_mode: true
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    # ZED visual odometry. Its pose starts at the camera's initial position, so fuse only the
+    # twist, which is in zed_camera_link. robot_localization corrects for that frame's offset.
+    odom0: /zed/zed_node/odom
+    odom0_config: [false, false, false,   # x, y, z
+                   false, false, false,   # roll, pitch, yaw
+                   true,  true,  false,   # vx, vy, vz
+                   false, false, true,    # vroll, vpitch, vyaw
+                   false, false, false]   # ax, ay, az
+    odom0_queue_size: 10
+
+    # ZED IMU. Yaw is relative to where the camera started, which matches the odom frame.
+    imu0: /zed/zed_node/imu/data
+    imu0_config: [false, false, false,
+                  false, false, true,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_queue_size: 20
+
+ekf_filter_node_map:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    # Publishes map -> odom, computed from its map pose and the odom EKF's odom -> base_footprint
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: map
+
+    # Same visual odometry and IMU as the odom EKF
+    odom0: /zed/zed_node/odom
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, true,
+                   false, false, false]
+    odom0_queue_size: 10
+
+    imu0: /zed/zed_node/imu/data
+    imu0_config: [false, false, false,
+                  false, false, true,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_queue_size: 20
+
+    # GPS position from navsat_transform, already in the map frame
+    odom1: /odometry/gps
+    odom1_config: [true,  true,  false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom1_queue_size: 10
+
+navsat_transform:
+  ros__parameters:
+    frequency: 30.0
+    # Let the EKFs and the ZED's tracking settle before fixing the GPS -> map transform
+    delay: 3.0
+    # A single GPS can't give heading at rest. By default gps_heading_init works it out from a
+    # few metres of driving and sets the datum through the /datum service. wait_for_datum
+    # stays false: with no datum parameter it would apply lat/lon 0, 0 immediately. Until
+    # then, the launch file points the imu input at a topic nothing publishes, so this waits.
+    # With gps_heading_init:=false, heading comes from the IMU instead. That's only correct
+    # in sim, where the ZED's start-relative yaw happens to read 0 facing east.
+    use_odometry_yaw: false
+    yaw_offset: 0.0
+    magnetic_declination_radians: 0.0
+    zero_altitude: true
+    # A local east-north-up plane around the first fix, rather than UTM, whose grid north is
+    # off true north by the zone's convergence angle
+    use_local_cartesian: true
+    broadcast_cartesian_transform: false
+    publish_filtered_gps: true
+    wait_for_datum: false
