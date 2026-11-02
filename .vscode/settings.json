@@ -106,5 +106,6 @@
         "**/node_modules",
         "**/__pycache__",
         "**/.*"
-    ]
+    ],
+    "cmake.sourceDirectory": "/Users/alexsing/TrickFire/trickfire-urc/src-autonomy/navigation_interfaces"
 }

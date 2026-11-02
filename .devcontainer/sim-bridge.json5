@@ -3,4 +3,21 @@
 // started before the devcontainer and survives devcontainer restarts.
 {
   connect: { timeout_ms: -1, exit_on_failure: false },
+  plugins: {
+    ros2dds: {
+      // Everything shares one link, so the ZED point cloud (~15 MB per message) would
+      // otherwise hold up small time-critical messages and deliver /clock in bursts.
+      // Priority 1 is highest, 5 the default; express sends without batching.
+      pub_priorities: [
+        "^/clock$=1:express",
+        "^/tf$=2:express",
+        "^/tf_static$=2",
+        "^/zed/zed_node/imu/data$=2:express",
+        "^/zed/zed_node/odom$=2",
+        "^/zed/zed_node/point_cloud/cloud_registered$=7",
+      ],
+      // Halves the cloud's bandwidth; the costmaps update at 5 Hz anyway
+      pub_max_frequencies: ["^/zed/zed_node/point_cloud/cloud_registered$=5"],
+    },
+  },
 }

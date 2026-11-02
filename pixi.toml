@@ -11,7 +11,14 @@ python = "3.12.*"
 [feature.ros.dependencies]
 ros-jazzy-desktop = "*"
 ros-jazzy-rosbridge-server = "*"
+ros-jazzy-geographic-msgs = "*"
+ros-jazzy-navigation2 = "*"
+ros-jazzy-robot-localization = "*"
 colcon-common-extensions = "*"
+# Toolchain for ament_cmake packages (rosidl generates C/C++ for interfaces)
+c-compiler = "*"
+cxx-compiler = "*"
+make = "*"
 
 [feature.ros.tasks]
 # Devcontainer side of the simulator bridge; the binary comes from the dev image.

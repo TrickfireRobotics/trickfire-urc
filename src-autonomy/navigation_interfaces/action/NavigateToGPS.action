@@ -1,0 +1,17 @@
+# Navigate the rover to a geographic coordinate.
+
+# Goal
+geographic_msgs/GeoPoint target   # WGS84 latitude/longitude (deg), altitude (m)
+---
+# Result
+uint16 NONE=0
+uint16 NO_GPS_FIX=1               # no fix/datum available to convert the target
+uint16 CONVERSION_FAILED=2        # lat/lon -> map conversion failed
+uint16 NAV2_REJECTED=3            # Nav2 refused the goal
+uint16 NAV2_FAILED=4              # Nav2 accepted but aborted
+
+uint16 error_code
+string error_msg
+---
+# Feedback
+float32 distance_remaining        # metres to target
