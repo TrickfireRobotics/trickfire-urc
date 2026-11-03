@@ -1,0 +1,18 @@
+# Navigate the rover to a pose given in any TF frame, such as a target the camera has found.
+
+# Goal
+geometry_msgs/PoseStamped target  # header.frame_id and stamp place the pose; stamp 0 means now
+---
+# Result
+uint16 NONE=0
+uint16 TRANSFORM_FAILED=1         # the target couldn't be placed in the map frame
+uint16 NAV2_REJECTED=3            # Nav2 refused the goal
+uint16 NAV2_FAILED=4              # Nav2 accepted but aborted
+uint16 GOAL_BLOCKED=5             # the target is inside or walled off by obstacles
+uint16 TIMED_OUT=6                # the rover didn't arrive in the time allowed for the distance
+
+uint16 error_code
+string error_msg
+---
+# Feedback
+float32 distance_remaining        # metres to target

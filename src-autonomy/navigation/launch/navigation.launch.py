@@ -146,6 +146,12 @@ def generate_launch_description():
                         IfElseSubstitution(gps_heading_init, NO_HEADING_TOPIC, HEADING_IMU_TOPIC),
                     ),
                     ("gps/fix", GPS_FIX_TOPIC),
+                    # gps_heading_init passes GPS odometry on, minus the stale messages that
+                    # follow the datum
+                    (
+                        "odometry/gps",
+                        IfElseSubstitution(gps_heading_init, "/odometry/gps_raw", "/odometry/gps"),
+                    ),
                     (
                         "odometry/filtered",
                         IfElseSubstitution(
@@ -172,9 +178,15 @@ def generate_launch_description():
                     }
                 ],
             ),
+            # Action servers that run goals through Nav2: lat/lon targets, and poses in any
+            # TF frame such as targets the camera has found
             Node(
                 package="navigation",
                 executable="gps_navigator",
+            ),
+            Node(
+                package="navigation",
+                executable="pose_navigator",
             ),
             Node(
                 package="navigation",

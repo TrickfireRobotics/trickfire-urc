@@ -5,11 +5,19 @@ antenna's map-frame position at the same instant and fits the rotation and trans
 the two tracks. That gives the lat/lon of the map origin and the earth heading of the map's +x
 axis, which it sends to navsat_transform as its datum. The track can be any shape; with RTK a
 few metres is enough, while a noisier fix needs a longer drive.
+
+navsat_transform's GPS odometry also passes through here, because its first messages after the
+datum are wrong: the pose it keeps for the last fix was taken relative to that fix itself, and
+nothing resets it when the datum changes the origin, so mapping it through the new datum puts
+the rover at the map origin until the next fix (robot_localization 3.8.3). Fed to the map EKF,
+that moved the map frame by the rover's distance from the origin for a GPS period, enough for
+Nav2 to lose its path. Messages stamped soon after the datum call are dropped instead.
 """
 
 import math
 
 import rclpy
+from nav_msgs.msg import Odometry
 from rclpy.duration import Duration
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -23,6 +31,9 @@ EARTH_A = 6378137.0
 EARTH_E2 = 6.69437999014e-3
 # Assumed when a fix has no covariance: about standalone GPS accuracy
 UNKNOWN_STDDEV = 2.5
+# GPS odometry stamped up to this long after the datum call is dropped. It covers the service
+# round trip and navsat_transform's timer period, after which fixes are placed from the datum.
+DATUM_SETTLE_S = 0.5
 
 
 def _metres_per_degree(latitude):
@@ -83,6 +94,8 @@ class GpsHeadingInit(Node):
         self._variances = []
         self._altitudes = []
         self._done = False
+        # When the datum was sent, as the node's clock read it
+        self._datum_time = None
 
         # main spins this node on two threads, so the listener's callbacks (in tf2_ros's own
         # reentrant group) keep filling the buffer while _on_fix waits on it for the transform at
@@ -92,7 +105,20 @@ class GpsHeadingInit(Node):
         self._tf_listener = TransformListener(self._tf_buffer, self)
         self._datum_client = self.create_client(SetDatum, "datum")
         self.create_subscription(NavSatFix, "gps/fix", self._on_fix, 10)
+        self._gps_odometry_pub = self.create_publisher(Odometry, "/odometry/gps", 10)
+        self.create_subscription(Odometry, "/odometry/gps_raw", self._on_gps_odometry, 10)
         self.get_logger().info(f"Drive at least {self.min_distance:g} m to find the heading")
+
+    def _on_gps_odometry(self, msg: Odometry):
+        """Pass GPS odometry on, except the stale messages right after the datum"""
+        if self._datum_time is not None and Time.from_msg(msg.header.stamp) <= (
+            self._datum_time + Duration(seconds=DATUM_SETTLE_S)
+        ):
+            self.get_logger().info(
+                "Dropping GPS odometry from before the datum settled", throttle_duration_sec=1.0
+            )
+            return
+        self._gps_odometry_pub.publish(msg)
 
     def _on_fix(self, fix: NavSatFix):
         if self._done or fix.status.status < NavSatStatus.STATUS_FIX:
@@ -153,6 +179,7 @@ class GpsHeadingInit(Node):
         request.geo_pose.orientation.z = math.sin(heading / 2.0)
         request.geo_pose.orientation.w = math.cos(heading / 2.0)
         self._done = True
+        self._datum_time = self.get_clock().now()
         self._datum_client.call_async(request).add_done_callback(self._on_datum_set)
         self.get_logger().info(
             f"Map +x heads {math.degrees(heading):.1f} deg from east "
@@ -163,6 +190,7 @@ class GpsHeadingInit(Node):
         if future.exception() is not None:
             self.get_logger().error(f"Setting the datum failed: {future.exception()}")
             self._done = False
+            self._datum_time = None
         else:
             self.get_logger().info("Datum set; GPS goals can now be converted to the map frame")
 

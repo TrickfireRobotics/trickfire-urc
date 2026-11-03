@@ -31,6 +31,7 @@ setup(
             "ground_truth_odom = navigation.ground_truth_odom:main",
             "gps_heading_init = navigation.gps_heading_init:main",
             "gps_navigator = navigation.gps_navigator:main",
+            "pose_navigator = navigation.pose_navigator:main",
         ],
     },
 )
