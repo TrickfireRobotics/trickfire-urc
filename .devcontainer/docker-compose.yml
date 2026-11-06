@@ -21,6 +21,7 @@ services:
   # docker compose -f .devcontainer/docker-compose.yml run --build --rm prod
   # Camera device mounts depend on the camera model.
   prod:
+    privileged: true
     profiles: [prod]
     platform: linux/arm64
     runtime: nvidia
