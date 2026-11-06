@@ -36,7 +36,7 @@ services:
     device_cgroup_rules:
       - "c 189:* rmw"
     command: >
-      bash -c "chmod 666 /dev/bus/usb/001/004 && tmux new -d -s ublox_session "ros2 launch ublox_dgnss ublox_rover_hpposecef.launch.py""
+      bash -c "sudo chmod 666 /dev/bus/usb/001/004 && tmux new -d -s ublox_session "ros2 launch ublox_dgnss ublox_rover_hpposecef.launch.py""
     group_add:
       - "plugdev"
     environment:
