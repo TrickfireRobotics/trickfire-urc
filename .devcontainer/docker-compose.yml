@@ -35,8 +35,6 @@ services:
       - "/dev/bus/usb:/dev/bus/usb"
     device_cgroup_rules:
       - "c 189:* rmw"
-    command: >
-      bash -c "tmux new -d -s ublox_session 'ros2 launch ublox_dgnss ublox_rover_hpposecef.launch.py' && sleep infinity"
     group_add:
       - "plugdev"
     environment:
