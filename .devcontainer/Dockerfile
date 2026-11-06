@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     wget \
     zstd \
+    tmux \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
@@ -60,7 +61,7 @@ RUN apt-get install ros2-apt-source && apt-get update && apt-get install -y --no
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
-    ros-jazzy-ublox \
+    ros-jazzy-ublox-dgnss \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd trickfire \

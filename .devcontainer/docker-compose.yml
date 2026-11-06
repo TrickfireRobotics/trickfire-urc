@@ -35,6 +35,7 @@ services:
     group_add:
       - "uucp"
       - "dialout"
+      - "plugdev"
     environment:
       TZ: ${TZ:-UTC}
       NVIDIA_VISIBLE_DEVICES: all
