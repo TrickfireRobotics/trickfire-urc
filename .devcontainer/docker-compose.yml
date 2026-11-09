@@ -33,6 +33,7 @@ services:
     user: trickfire
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
+      - "/dev/ttyACM0:/dev/ttyACM0"
     device_cgroup_rules:
       - "c 189:* rmw"
     group_add:
