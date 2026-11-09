@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ros:jazzy-ros-base AS prod
+FROM ros:jazzy-ros-base AS rover
 ARG DEBIAN_FRONTEND=noninteractive
 ARG L4T_RELEASE=r39.2
 ARG CUDA_TOOLKIT_PKG=cuda-toolkit-13-2

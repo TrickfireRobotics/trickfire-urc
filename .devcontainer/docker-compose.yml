@@ -1,5 +1,5 @@
 services:
-  robot:
+  dev:
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -9,13 +9,6 @@ services:
     user: trickfire
     environment:
       TZ: ${TZ:-UTC}
-    devices:
-      - "/dev/bus/usb:/dev/bus/usb"
-      - "/dev/ttyACM0:/dev/ttyACM0"
-    device_cgroup_rules:
-      - "c 189:* rmw"
-    group_add:
-      - "plugdev"
     volumes:
       - type: bind
         source: ..
@@ -35,11 +28,10 @@ services:
     tty: true
 
   # Jetson AGX Orin running JetPack 7.2 (L4T r39.2):
-  # docker compose -f .devcontainer/docker-compose.yml run --build --rm prod
   # Camera device mounts depend on the camera model.
-  prod:
+  rover:
     privileged: true
-    profiles: [prod]
+    profiles: rover
     platform: linux/arm64
     runtime: nvidia
     build:
@@ -51,6 +43,13 @@ services:
     environment:
       TZ: ${TZ:-UTC}
       NVIDIA_VISIBLE_DEVICES: all
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    device_cgroup_rules:
+      - "c 189:* rmw"
+    group_add:
+      - "plugdev"
     network_mode: host
     volumes:
       - type: bind

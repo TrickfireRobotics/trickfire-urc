@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 
 readonly log_prefix="TRICKFIRE DOCKER"
 readonly compose_file=".devcontainer/docker-compose.yml"
-readonly service="robot"
+readonly service="rover"
 
 readonly blue='\033[0;34m'
 readonly green='\033[0;32m'

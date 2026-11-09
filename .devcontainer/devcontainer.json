@@ -1,6 +1,6 @@
 {
     "dockerComposeFile": "docker-compose.yml",
-    "service": "robot",
+    "service": "dev",
     "containerUser": "trickfire",
     "remoteUser": "trickfire",
     "workspaceFolder": "/home/trickfire/trickfire-urc",
