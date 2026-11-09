@@ -31,13 +31,13 @@ services:
   # Camera device mounts depend on the camera model.
   rover:
     privileged: true
-    profiles: rover
+    profiles: [rover]
     platform: linux/arm64
     runtime: nvidia
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
-      target: prod
+      target: rover
     image: trickfire-urc-prod:latest
     user: trickfire
     environment:
