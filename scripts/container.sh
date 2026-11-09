@@ -53,4 +53,5 @@ if [[ $attach_only == false ]]; then
 fi
 
 log_info "Connecting to '${service}' container"
-exec docker compose exec "$service" /bin/bash
+
+exec docker compose -f "$compose_file" exec "$service" /bin/bash
