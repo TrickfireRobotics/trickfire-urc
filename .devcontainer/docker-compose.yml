@@ -43,6 +43,7 @@ services:
     environment:
       TZ: ${TZ:-UTC}
       NVIDIA_VISIBLE_DEVICES: all
+      UDEV: 1
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
       - "/dev/ttyACM0:/dev/ttyACM0"
