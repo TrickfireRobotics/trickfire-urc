@@ -5,8 +5,8 @@ source /opt/ros/jazzy/setup.bash
 
 test "$(id -un)" = trickfire
 test -w /home/trickfire/trickfire-urc
-for tool in colcon clangd clang-tidy clang-format gdb git ssh shfmt ruff; do
-	command -v "$tool" >/dev/null
+for tool in colcon clangd clang-tidy clang-format gdb git pre-commit ssh shfmt ruff; do
+    command -v "$tool" >/dev/null
 done
 ros2 pkg prefix rviz2
 ros2 pkg prefix rosbridge_server

@@ -27,8 +27,10 @@ if [ -f /opt/ros/jazzy/setup.bash ]; then
 fi
 
 # ---------- ROS workspace overlay ----------
+export ROS_WS="${ROS_WS:-/home/trickfire/trickfire-urc}"
+
 _ros_source_env() {
-    if [ -n "${ROS_WS:-}" ] && [ -f "${ROS_WS}/install/setup.bash" ]; then
+    if [ -f "${ROS_WS}/install/setup.bash" ]; then
         source "${ROS_WS}/install/setup.bash"
     fi
 }
