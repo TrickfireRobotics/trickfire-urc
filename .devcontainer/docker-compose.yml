@@ -9,6 +9,13 @@ services:
     user: trickfire
     environment:
       TZ: ${TZ:-UTC}
+    devices:
+      - "/dev/bus/usb:/dev/bus/usb"
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    device_cgroup_rules:
+      - "c 189:* rmw"
+    group_add:
+      - "plugdev"
     volumes:
       - type: bind
         source: ..
@@ -41,13 +48,6 @@ services:
       target: prod
     image: trickfire-urc-prod:latest
     user: trickfire
-    devices:
-      - "/dev/bus/usb:/dev/bus/usb"
-      - "/dev/ttyACM0:/dev/ttyACM0"
-    device_cgroup_rules:
-      - "c 189:* rmw"
-    group_add:
-      - "plugdev"
     environment:
       TZ: ${TZ:-UTC}
       NVIDIA_VISIBLE_DEVICES: all
