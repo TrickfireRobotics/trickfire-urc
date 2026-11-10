@@ -29,7 +29,7 @@ To fix that, one [zenoh bridge](https://github.com/eclipse-zenoh/zenoh-plugin-ro
 </Callout>
 
 1. Start the simulator as usual, e.g. `pixi run sim gazebo chassis`.
-2. Open this repository in its devcontainer. The urc-side bridge starts inside it automatically (`pixi run sim-bridge`, logging to `/tmp/sim-bridge.log`).
+2. Open this repository in its devcontainer. The urc-side bridge starts inside it automatically (`.devcontainer/start-sim-bridge.sh`, logging to `/tmp/sim-bridge.log`).
 3. In a **host** terminal, from this repository's root, start the sim-side bridge and leave it running:
 
     ```bash title="Host terminal"
@@ -60,7 +60,7 @@ Only topics that someone subscribes to on the other side are forwarded. Control,
 ## Troubleshooting
 
 - **Topics don't appear.**
-  - Check the urc-side bridge is running: `pgrep -a zenoh-bridge` in the devcontainer, and see `/tmp/sim-bridge.log`. If it isn't, start it in a devcontainer terminal with `pixi run sim-bridge`.
+  - Check the urc-side bridge is running: `pgrep -a zenoh-bridge` in the devcontainer, and see `/tmp/sim-bridge.log`. If it isn't, start it in a devcontainer terminal with `.devcontainer/start-sim-bridge.sh`.
   - Both bridges must run the same version. `ZENOH_BRIDGE_VERSION` in `.devcontainer/Dockerfile` and `VERSION` in `sim-bridge.sh` must match.
   - `ROS_DOMAIN_ID` must be the same in the sim, in the devcontainer, and in the environment you run `sim-bridge.sh` from.
 - **`[sim-bridge] run this from a host terminal`.** You ran the script inside the devcontainer. Open a terminal on your machine instead.
