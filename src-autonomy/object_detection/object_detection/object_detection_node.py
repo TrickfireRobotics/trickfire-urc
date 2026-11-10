@@ -34,12 +34,7 @@ class ObjectDetectionNode(Node):
         # Initialize CV Bridge
         self.bridge = CvBridge()
 
-        # Load YOLO model from package share directory
-        # package_share_dir = get_package_share_directory("yolo26_ros2")
-        # full_model_path = os.path.join(package_share_dir, "models", model_name)
-
         self.get_logger().info(f"Loading YOLO model")
-        # self.model = YOLO(full_model_path)
         self.model = YOLO(model=str(model_name), task=str(model_task), verbose=True)
         self.get_logger().info("YOLO model loaded successfully")
 
@@ -56,11 +51,11 @@ class ObjectDetectionNode(Node):
 
         self.camera_subscriber = self.create_subscription(
             Image,
-            "/zed/zed_node/rgb/color/rect/image",
+            image_topic,
             self.image_callback,
             qos_profile_sensor_data,
         )
-        self.pub = self.create_publisher(Detection2DArray, "detections", 10)
+        self.detection_pub = self.create_publisher(Detection2DArray, "detections", 10)
 
     def image_callback(self, msg):
         try:
@@ -121,7 +116,7 @@ class ObjectDetectionNode(Node):
                     detection_array.detections.append(detection)
 
             # Publish detections and annotated images
-            self.pub.publish(detection_array)
+            self.detection_pub.publish(detection_array)
 
             annotated_img_msg = self.bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
             annotated_img_msg.header = msg.header
@@ -137,11 +132,6 @@ class ObjectDetectionNode(Node):
 
         except Exception as e:
             self.get_logger().error(f"Error processing image: {str(e)}")
-
-    # def on_image(self, msg):
-    #     frame = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-    #     result = self.model(frame, conf=0.5, verbose=False)[0]
-    #     # build a Detection2DArray from result.boxes, reuse msg.header, publish
 
 
 def main(args=None):
