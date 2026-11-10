@@ -46,12 +46,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
     wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
     echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
-        > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
     apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" && \
     rm -rf /var/lib/apt/lists/* \
-        /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
-        /etc/apt/preferences.d/nvidia-repo-pin-600 \
-        /etc/apt/trusted.gpg.d/jetson-ota-public.asc
+    /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    /etc/apt/preferences.d/nvidia-repo-pin-600 \
+    /etc/apt/trusted.gpg.d/jetson-ota-public.asc
 
 # ------------------------------------
 # Zed sdk installer
@@ -69,7 +69,7 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
 # ------------------------------------
 
 RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
-        "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
     && dpkg -i /tmp/ros2-apt-source.deb \
     && rm /tmp/ros2-apt-source.deb
 
@@ -85,6 +85,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
+    ros-jazzy-vision-msgs \
     && rosdep init \
     && rm -rf /var/lib/apt/lists/*
 
@@ -98,9 +99,9 @@ ARG ULTRALYTICS_VERSION=8.4.208
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu132
 RUN echo "numpy<2" > /tmp/constraints.txt \
     && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
-        --index-url "${TORCH_INDEX_URL}" torch torchvision \
+    --index-url "${TORCH_INDEX_URL}" torch torchvision \
     && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
-        "ultralytics==${ULTRALYTICS_VERSION}" \
+    "ultralytics==${ULTRALYTICS_VERSION}" \
     && rm /tmp/constraints.txt
 
 RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
@@ -158,7 +159,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ------------------------------------
 
 RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
-        "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
     && dpkg -i /tmp/ros2-apt-source.deb \
     && rm /tmp/ros2-apt-source.deb
 
@@ -175,6 +176,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-vision-opencv \
     ros-jazzy-pinocchio \
     ros-jazzy-coal \
+    ros-jazzy-vision-msgs \
     && rosdep init \
     && rm -rf /var/lib/apt/lists/*
 
@@ -192,9 +194,9 @@ ARG ULTRALYTICS_VERSION=8.4.208
 ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
 RUN echo "numpy<2" > /tmp/constraints.txt \
     && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
-        --index-url "${TORCH_INDEX_URL}" torch torchvision \
+    --index-url "${TORCH_INDEX_URL}" torch torchvision \
     && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
-        "ultralytics==${ULTRALYTICS_VERSION}" \
+    "ultralytics==${ULTRALYTICS_VERSION}" \
     && rm /tmp/constraints.txt
 
 # ------------------------------------
@@ -205,12 +207,12 @@ RUN echo "numpy<2" > /tmp/constraints.txt \
 ARG ZENOH_BRIDGE_VERSION=1.10.1
 ARG TARGETARCH
 RUN case "${TARGETARCH}" in \
-        amd64) target=x86_64-unknown-linux-gnu ;; \
-        arm64) target=aarch64-unknown-linux-gnu ;; \
-        *) echo "unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    amd64) target=x86_64-unknown-linux-gnu ;; \
+    arm64) target=aarch64-unknown-linux-gnu ;; \
+    *) echo "unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
     esac \
     && curl -fsSL -o /tmp/zenoh-bridge.zip \
-        "https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds/releases/download/${ZENOH_BRIDGE_VERSION}/zenoh-plugin-ros2dds-${ZENOH_BRIDGE_VERSION}-${target}-standalone.zip" \
+    "https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds/releases/download/${ZENOH_BRIDGE_VERSION}/zenoh-plugin-ros2dds-${ZENOH_BRIDGE_VERSION}-${target}-standalone.zip" \
     && unzip -oq /tmp/zenoh-bridge.zip zenoh-bridge-ros2dds -d /usr/local/bin \
     && chmod +x /usr/local/bin/zenoh-bridge-ros2dds \
     && rm /tmp/zenoh-bridge.zip
