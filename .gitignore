@@ -1,19 +1,13 @@
+# Basic
 .DS_Store
+
+# pixi
+.pixi/
 
 # trickfire-docs
 dist/
 
-# python
-__pycache__/
-
-# zed
+# ZED SDK installers (large binaries; the prod Dockerfile stage downloads
+# these itself, matched to the target L4T/CUDA version)
 *.run
 *.zstd.run
-
-# colcon
-install/
-log/
-build/
-
-# test generated files
-src-autonomy/ar_tag_detection/test/output_images/
