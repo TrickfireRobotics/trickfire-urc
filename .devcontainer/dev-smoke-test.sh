@@ -23,6 +23,8 @@ import cv_bridge
 import numpy as np
 import pinocchio as pin
 import rclpy
+import torch
+import ultralytics
 
 # Exercise compiled bindings together, not just their package metadata.
 pixels = np.zeros((8, 8, 3), dtype=np.uint8)
@@ -49,7 +51,8 @@ node = rclpy.create_node("devcontainer_smoke_test")
 node.destroy_node()
 rclpy.shutdown()
 print(f"Bindings OK: NumPy {np.__version__}, OpenCV {cv2.__version__}, "
-      f"Pinocchio {pin.__version__}, Coal {coal.__version__}")
+      f"Pinocchio {pin.__version__}, Coal {coal.__version__}, "
+      f"PyTorch {torch.__version__}, Ultralytics {ultralytics.__version__}")
 PY
 
 echo "Development container smoke check passed."

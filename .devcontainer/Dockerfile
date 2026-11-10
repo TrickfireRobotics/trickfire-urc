@@ -79,6 +79,7 @@ RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-colcon-common-extensions \
+    python3-pip \
     python3-rosdep \
     ros-jazzy-ros-base \
     ros-jazzy-rosbridge-server \
@@ -86,6 +87,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-vision-opencv \
     && rosdep init \
     && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------
+# Ultralytics YOLO26 (object detection)
+# ------------------------------------
+
+# PyTorch build must match CUDA_TOOLKIT_PKG. NumPy stays on the apt 1.x that
+# cv_bridge is compiled against.
+ARG ULTRALYTICS_VERSION=8.4.208
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu132
+RUN echo "numpy<2" > /tmp/constraints.txt \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+        --index-url "${TORCH_INDEX_URL}" torch torchvision \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+        "ultralytics==${ULTRALYTICS_VERSION}" \
+    && rm /tmp/constraints.txt
 
 RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
     && groupmod --new-name trickfire ubuntu \
@@ -165,6 +181,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
     && PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pre-commit \
     && chmod -R a+rX /opt/pipx
+
+# ------------------------------------
+# Ultralytics YOLO26 (object detection)
+# ------------------------------------
+
+# CPU-only PyTorch keeps the dev image small; prod uses the CUDA build.
+# NumPy stays on the apt 1.x that cv_bridge is compiled against.
+ARG ULTRALYTICS_VERSION=8.4.208
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+RUN echo "numpy<2" > /tmp/constraints.txt \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+        --index-url "${TORCH_INDEX_URL}" torch torchvision \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+        "ultralytics==${ULTRALYTICS_VERSION}" \
+    && rm /tmp/constraints.txt
 
 # ------------------------------------
 # Zenoh bridge to the simulator (see docs/simulation.mdx)
