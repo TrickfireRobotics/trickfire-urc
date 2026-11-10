@@ -9,10 +9,10 @@ set -euo pipefail
 LOG=/tmp/sim-bridge.log
 
 if pgrep -x zenoh-bridge-ros2dds >/dev/null; then
-	echo "sim-bridge already running (log: $LOG)"
-	exit 0
+    echo "sim-bridge already running (log: $LOG)"
+    exit 0
 fi
 
 setsid -f zenoh-bridge-ros2dds router -l tcp/0.0.0.0:7447 --no-multicast-scouting \
-	>"$LOG" 2>&1 </dev/null
+    >"$LOG" 2>&1 </dev/null
 echo "sim-bridge started (log: $LOG)"
