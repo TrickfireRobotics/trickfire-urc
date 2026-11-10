@@ -4,7 +4,7 @@
 # runs on each side and forwards topics/services/actions over TCP port 7447.
 #
 # Run from a HOST terminal, not inside the devcontainer. The urc-side bridge
-# runs inside the devcontainer (start-sim-bridge.sh) and starts with it.
+# runs inside the devcontainer (`pixi run sim-bridge`) and starts with it.
 #
 #   sim-bridge.sh native   run the sim-side bridge on this host (sim via pixi)
 #   sim-bridge.sh docker   run the sim-side bridge in the sim's container
