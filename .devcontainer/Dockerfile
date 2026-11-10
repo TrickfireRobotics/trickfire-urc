@@ -8,11 +8,11 @@ ARG ZED_SDK_MINOR=5
 ARG ZED_SDK_PATCH=0
 ARG L4T_MAJOR=39
 ARG L4T_MINOR=2
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
     TZ=UTC \
-    PIXI_HOME=/opt/pixi \
-    PATH=/opt/pixi/bin:/usr/local/cuda/bin:${PATH} \
+    PATH=/usr/local/cuda/bin:${PATH} \
     LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
@@ -64,8 +64,28 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
     && rm -rf /tmp/ZED_SDK_Linux.run /usr/local/zed/resources/* \
     && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
 
-RUN curl -fsSL https://pixi.sh/install.sh | \
-    env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
+# ------------------------------------
+# ROS Jazzy apt repository
+# ------------------------------------
+
+RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
+        "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    && dpkg -i /tmp/ros2-apt-source.deb \
+    && rm /tmp/ros2-apt-source.deb
+
+# ------------------------------------
+# ROS packages used at runtime
+# ------------------------------------
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    ros-jazzy-ros-base \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-vision-opencv \
+    && rosdep init \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN useradd trickfire \
     --shell /bin/bash \
@@ -87,18 +107,29 @@ WORKDIR /home/trickfire/trickfire-urc
 # ------------------------------------
 
 FROM ubuntu:24.04 AS dev
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
-    TZ=UTC \
-    PIXI_HOME=/opt/pixi \
-    PATH=/opt/pixi/bin:${PATH}
+    TZ=UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     ca-certificates \
+    clang-format \
+    clang-tidy \
+    clang-tools \
+    clangd \
+    cmake \
     curl \
+    gdb \
     git \
     locales \
     openssh-client \
+    pipx \
+    procps \
+    python3-pip \
+    shfmt \
     sudo \
     tzdata \
     unzip \
@@ -108,8 +139,33 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://pixi.sh/install.sh | \
-    env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
+# ------------------------------------
+# ROS Jazzy apt repository
+# ------------------------------------
+
+RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
+        "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    && dpkg -i /tmp/ros2-apt-source.deb \
+    && rm /tmp/ros2-apt-source.deb
+
+# ------------------------------------
+# ROS packages used for development
+# ------------------------------------
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    ros-jazzy-desktop \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-vision-opencv \
+    ros-jazzy-pinocchio \
+    ros-jazzy-coal \
+    && rosdep init \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
+    && chmod -R a+rX /opt/pipx
 
 # ------------------------------------
 # Zenoh bridge to the simulator (see docs/simulation.mdx)
