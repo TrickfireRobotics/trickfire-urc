@@ -11,6 +11,7 @@
 # Extra args are passed to zenoh-bridge-ros2dds.
 #
 # Env: ROS_DOMAIN_ID (default 0), SIM_CONTAINER (default simulations),
+#      URC_CONTAINER (default trickfire-urc),
 #      ZENOH_ENDPOINT (override where the sim-side bridge connects).
 set -euo pipefail
 
@@ -75,8 +76,16 @@ native)
     ;;
 docker)
     sim="${SIM_CONTAINER:-simulations}"
-    endpoint="${ZENOH_ENDPOINT:-tcp/host.docker.internal:7447}"
+    urc="${URC_CONTAINER:-trickfire-urc}"
     docker inspect "$sim" >/dev/null 2>&1 || die "container '$sim' is not running"
+    docker inspect "$urc" >/dev/null 2>&1 || die "container '$urc' is not running"
+    network="$(docker inspect "$urc" --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' | head -n 1)"
+    [ -n "$network" ] || die "container '$urc' is not connected to a Docker network"
+    if ! docker inspect "$sim" --format '{{json .NetworkSettings.Networks}}' | grep -Fq "\"$network\""; then
+        log "connecting '$sim' to Docker network '$network'"
+        docker network connect "$network" "$sim"
+    fi
+    endpoint="${ZENOH_ENDPOINT:-tcp/$urc:7447}"
     log "bridging '$sim' ROS 2 (domain $ROS_DOMAIN_ID) -> $endpoint"
     exec docker run --rm -it --name sim-bridge-sim \
         --network "container:$sim" -e ROS_DOMAIN_ID -e ROS_DISTRO \
