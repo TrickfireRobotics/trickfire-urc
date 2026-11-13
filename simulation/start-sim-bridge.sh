@@ -3,7 +3,7 @@
 # logging to /tmp/sim-bridge.log. Run by postStartCommand; safe to rerun from
 # a devcontainer terminal if the bridge has died. See docs/simulation.mdx.
 #
-# The binary comes from the dev image; the sim-side bridge is sim-bridge.sh.
+# The binary comes from the dev image; the sim-side bridge is simulation/sim-bridge.sh.
 set -euo pipefail
 
 LOG=/tmp/sim-bridge.log

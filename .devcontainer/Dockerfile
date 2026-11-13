@@ -170,7 +170,7 @@ RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
 # Zenoh bridge to the simulator (see docs/simulation.mdx)
 # ------------------------------------
 
-# Must match VERSION in sim-bridge.sh.
+# Must match VERSION in simulation/sim-bridge.sh.
 ARG ZENOH_BRIDGE_VERSION=1.10.1
 ARG TARGETARCH
 RUN case "${TARGETARCH}" in \

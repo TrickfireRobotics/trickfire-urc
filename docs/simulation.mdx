@@ -16,24 +16,24 @@ To fix that, one [zenoh bridge](https://github.com/eclipse-zenoh/zenoh-plugin-ro
 
 | How the sim runs                                 | OS                   | Sim-side bridge                  |
 | ------------------------------------------------ | -------------------- | -------------------------------- |
-| Native with `pixi run sim ...`                   | macOS, Linux, WSL2   | `.devcontainer/sim-bridge.sh native` |
-| In its devcontainer (`simulations` container)    | Windows, macOS       | `.devcontainer/sim-bridge.sh docker` |
+| Native with `pixi run sim ...`                   | macOS, Linux, WSL2   | `simulation/sim-bridge.sh native` |
+| In its devcontainer (`simulations` container)    | Windows, macOS       | `simulation/sim-bridge.sh docker` |
 | In its devcontainer on Linux Docker Engine       | Linux                | `native` is recommended instead (see troubleshooting) |
 
 ## Steps
 
 <Callout type="warn" title="Host terminal, not the devcontainer">
-    `sim-bridge.sh` runs on the **host** (a regular terminal on your machine, outside VS Code's
+    `simulation/sim-bridge.sh` runs on the **host** (a regular terminal on your machine, outside VS Code's
     devcontainer terminal). The sim-side bridge has to see the sim's traffic, and the devcontainer
     has no Docker access. Running it inside the devcontainer exits with an error.
 </Callout>
 
 1. Start the simulator as usual, e.g. `pixi run sim gazebo chassis`.
-2. Open this repository in its devcontainer. The urc-side bridge starts inside it automatically (`.devcontainer/start-sim-bridge.sh`, logging to `/tmp/sim-bridge.log`).
+2. Open this repository in its devcontainer. The urc-side bridge starts inside it automatically (`simulation/start-sim-bridge.sh`, logging to `/tmp/sim-bridge.log`).
 3. In a **host** terminal, from this repository's root, start the sim-side bridge and leave it running:
 
     ```bash title="Host terminal"
-    .devcontainer/sim-bridge.sh native   # or: docker
+    simulation/sim-bridge.sh native   # or: docker
     ```
 
 4. In the devcontainer, the sim's topics are now available:
@@ -60,10 +60,10 @@ Only topics that someone subscribes to on the other side are forwarded. Control,
 ## Troubleshooting
 
 - **Topics don't appear.**
-  - Check the urc-side bridge is running: `pgrep -a zenoh-bridge` in the devcontainer, and see `/tmp/sim-bridge.log`. If it isn't, start it in a devcontainer terminal with `.devcontainer/start-sim-bridge.sh`.
-  - Both bridges must run the same version. `ZENOH_BRIDGE_VERSION` in `.devcontainer/Dockerfile` and `VERSION` in `sim-bridge.sh` must match.
-  - `ROS_DOMAIN_ID` must be the same in the sim, in the devcontainer, and in the environment you run `sim-bridge.sh` from.
+  - Check the urc-side bridge is running: `pgrep -a zenoh-bridge` in the devcontainer, and see `/tmp/sim-bridge.log`. If it isn't, start it in a devcontainer terminal with `simulation/start-sim-bridge.sh`.
+  - Both bridges must run the same version. `ZENOH_BRIDGE_VERSION` in `.devcontainer/Dockerfile` and `VERSION` in `simulation/sim-bridge.sh` must match.
+  - `ROS_DOMAIN_ID` must be the same in the sim, in the devcontainer, and in the environment you run `simulation/sim-bridge.sh` from.
 - **`[sim-bridge] run this from a host terminal`.** You ran the script inside the devcontainer. Open a terminal on your machine instead.
 - **The devcontainer fails to start on port 7447.** If the log mentions an orphan `trickfire-urc_devcontainer-sim-bridge-1` container, it's left over from an older version of this setup. Remove it with `docker rm -f trickfire-urc_devcontainer-sim-bridge-1` and reopen. Otherwise another process is using the port. Check with `lsof -i :7447` (macOS/Linux) or `netstat -ano | findstr 7447` (Windows).
-- **Native sim on an offline Mac.** With no network, CycloneDDS falls back to `lo0`, which has no multicast. Set `CYCLONEDDS_URI` to a config that uses `lo0` with multicast disabled and `127.0.0.1` as a peer. Export it in both the sim terminal and the `sim-bridge.sh native` terminal.
+- **Native sim on an offline Mac.** With no network, CycloneDDS falls back to `lo0`, which has no multicast. Set `CYCLONEDDS_URI` to a config that uses `lo0` with multicast disabled and `127.0.0.1` as a peer. Export it in both the sim terminal and the `simulation/sim-bridge.sh native` terminal.
 - **Sim container on Linux Docker Engine.** `host.docker.internal` doesn't exist there. Run the sim natively and use `native`, or point the bridge elsewhere with `ZENOH_ENDPOINT=tcp/<docker0 IP>:7447`. That second option also requires publishing the port beyond `127.0.0.1`.
