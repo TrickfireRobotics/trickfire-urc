@@ -6,7 +6,7 @@ import rclpy
 from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import CompressedImage, Image
 from ultralytics import YOLO
 from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
@@ -23,6 +23,7 @@ class ObjectDetectionNode(Node):
         self.declare_parameter("annotated_image_topic", "/image_annotated")
         self.declare_parameter("model_name", "yolo26n.pt")
         self.declare_parameter("model_task", "detect")
+        self.declare_parameter("inference_size", 416)
 
         # Get parameters
         image_topic: str = str(self.get_parameter("image_topic").value)
@@ -30,6 +31,7 @@ class ObjectDetectionNode(Node):
         model_name: str = str(self.get_parameter("model_name").value)
         annotated_image_topic: str = str(self.get_parameter("annotated_image_topic").value)
         model_task: str = str(self.get_parameter("model_task").value)
+        self.inference_size = int(self.get_parameter("inference_size").value)
 
         # Initialize CV Bridge
         self.bridge = CvBridge()
@@ -44,7 +46,12 @@ class ObjectDetectionNode(Node):
         self.get_logger().info("YOLO model loaded successfully")
 
         # Create subscriber and publishers
-        self.img_sub = self.create_subscription(Image, image_topic, self.image_callback, 10)
+        image_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.BEST_EFFORT,
+        )
+        self.img_sub = self.create_subscription(Image, image_topic, self.image_callback, image_qos)
         self.det_pub = self.create_publisher(Detection2DArray, detections_topic, 10)
         self.annotated_img_pub = self.create_publisher(Image, annotated_image_topic, 10)
         self.compressed_img_pub = self.create_publisher(
@@ -54,21 +61,13 @@ class ObjectDetectionNode(Node):
         self.get_logger().info(f"Subscribing to: {image_topic}")
         self.get_logger().info(f"Publishing detections to: {detections_topic}")
 
-        self.camera_subscriber = self.create_subscription(
-            Image,
-            "/zed/zed_node/rgb/color/rect/image",
-            self.image_callback,
-            qos_profile_sensor_data,
-        )
-        self.pub = self.create_publisher(Detection2DArray, "detections", 10)
-
     def image_callback(self, msg):
         try:
             # Convert ROS Image to OpenCV format
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
 
             # Run YOLO detection
-            results = self.model(cv_image, verbose=False)
+            results = self.model(cv_image, imgsz=self.inference_size, verbose=False)
 
             # Create Detection2DArray message
             detection_array = Detection2DArray()
@@ -121,7 +120,7 @@ class ObjectDetectionNode(Node):
                     detection_array.detections.append(detection)
 
             # Publish detections and annotated images
-            self.pub.publish(detection_array)
+            self.det_pub.publish(detection_array)
 
             annotated_img_msg = self.bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
             annotated_img_msg.header = msg.header
