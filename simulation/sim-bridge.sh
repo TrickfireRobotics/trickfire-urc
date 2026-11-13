@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Connects the simulator's ROS 2 graph to the trickfire-urc container.
-# DDS multicast discovery can't cross the Docker boundary, so a zenoh bridge
-# runs on each side and forwards topics/services/actions over TCP port 7447.
+# Connects the simulator's ROS 2 graph to trickfire-urc.
+# Native simulations use Zenoh to cross the host/container boundary. Docker
+# simulations join the URC Docker network and use DDS directly.
 #
 # Run from a HOST terminal, not inside the devcontainer. The urc-side bridge
 # runs inside the devcontainer (start-sim-bridge.sh) and starts with it.
 #
 #   sim-bridge.sh native   run the sim-side bridge on this host (sim via pixi)
-#   sim-bridge.sh docker   run the sim-side bridge in the sim's container
-# Extra args are passed to zenoh-bridge-ros2dds.
+#   sim-bridge.sh docker   connect the two containers to one DDS network
+# Extra args in native mode are passed to zenoh-bridge-ros2dds.
 #
 # Env: ROS_DOMAIN_ID (default 0), SIM_CONTAINER (default simulations),
 #      URC_CONTAINER (default trickfire-urc),
-#      ZENOH_ENDPOINT (override where the sim-side bridge connects).
+#      ZENOH_ENDPOINT (override where the native bridge connects).
 set -euo pipefail
 
 # Must match ZENOH_BRIDGE_VERSION in the Dockerfile.
@@ -85,12 +85,11 @@ docker)
         log "connecting '$sim' to Docker network '$network'"
         docker network connect "$network" "$sim"
     fi
-    endpoint="${ZENOH_ENDPOINT:-tcp/$urc:7447}"
-    log "bridging '$sim' ROS 2 (domain $ROS_DOMAIN_ID) -> $endpoint"
-    exec docker run --rm -it --name sim-bridge-sim \
-        --network "container:$sim" -e ROS_DOMAIN_ID -e ROS_DISTRO \
-        -v "$CONFIG:/sim-bridge.json5:ro" \
-        "$IMAGE" client -c /sim-bridge.json5 -e "$endpoint" --no-multicast-scouting "$@"
+    if docker container inspect sim-bridge-sim >/dev/null 2>&1; then
+        log "removing the obsolete Docker-side Zenoh bridge"
+        docker rm -f sim-bridge-sim >/dev/null
+    fi
+    log "'$sim' and '$urc' now share '$network' (ROS domain $ROS_DOMAIN_ID)"
     ;;
 *)
     sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
