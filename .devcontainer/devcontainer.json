@@ -5,7 +5,6 @@
     "remoteUser": "trickfire",
     "workspaceFolder": "/home/trickfire/trickfire-urc",
     "shutdownAction": "stopCompose",
-    "postStartCommand": ".devcontainer/start-sim-bridge.sh",
     "customizations": {
         "vscode": {
             "extensions": [
