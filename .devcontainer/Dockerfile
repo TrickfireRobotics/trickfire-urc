@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 FROM ubuntu:24.04 AS prod
+FROM ubuntu:24.04 AS prod
 ARG DEBIAN_FRONTEND=noninteractive
 ARG L4T_RELEASE=r39.2
 ARG CUDA_TOOLKIT_PKG=cuda-toolkit-13-2
@@ -8,6 +9,7 @@ ARG ZED_SDK_MINOR=5
 ARG ZED_SDK_PATCH=0
 ARG L4T_MAJOR=39
 ARG L4T_MINOR=2
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
@@ -25,13 +27,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     gnupg2 \
     less \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    git \
+    gnupg2 \
+    less \
     locales \
+    lsb-release \
     lsb-release \
     openssh-client \
     sudo \
     tzdata \
     udev \
+    sudo \
+    tzdata \
+    udev \
     wget \
+    zstd \
     zstd \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
@@ -63,6 +77,15 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
     && /tmp/ZED_SDK_Linux.run silent skip_tools skip_drivers skip_cuda \
     && rm -rf /tmp/ZED_SDK_Linux.run /usr/local/zed/resources/* \
     && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
+
+# ------------------------------------
+# ROS Jazzy apt repository
+# ------------------------------------
+
+RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
+    "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    && dpkg -i /tmp/ros2-apt-source.deb \
+    && rm /tmp/ros2-apt-source.deb
 
 # ------------------------------------
 # ROS Jazzy apt repository
@@ -124,6 +147,9 @@ WORKDIR /home/trickfire/trickfire-urc
 FROM ubuntu:24.04 AS dev
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ROS_APT_SOURCE_VERSION=1.3.0
+FROM ubuntu:24.04 AS dev
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
     TZ=UTC
@@ -137,16 +163,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clangd \
     cmake \
     curl \
+    curl \
     gdb \
     git \
     locales \
     openssh-client \
     pipx \
     procps \
+    procps \
     python3-pip \
     shfmt \
     sudo \
     tzdata \
+    unzip \
     unzip \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
@@ -168,6 +197,8 @@ RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
 # ------------------------------------
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-colcon-common-extensions \
+    python3-rosdep \
     python3-colcon-common-extensions \
     python3-rosdep \
     ros-jazzy-desktop \
