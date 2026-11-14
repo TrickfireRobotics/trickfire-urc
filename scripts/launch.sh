@@ -13,6 +13,10 @@ fi
 
 export RCUTILS_COLORIZED_OUTPUT=1
 source "/opt/ros/${ROS_DISTRO:?ROS_DISTRO must be set}/setup.bash"
+# ZED ROS 2 wrapper overlay, only present in the rover image.
+if [[ -f /opt/zed_ws/install/setup.bash ]]; then
+    source /opt/zed_ws/install/setup.bash
+fi
 source install/setup.bash
 
 if ! ros2 pkg prefix "$launch_package" >/dev/null 2>&1; then
