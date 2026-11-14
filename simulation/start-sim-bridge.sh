@@ -3,12 +3,13 @@
 # logging to /tmp/sim-bridge.log. Run by postStartCommand; safe to rerun from
 # a devcontainer terminal if the bridge has died. See docs/simulation.mdx.
 #
-# The binary comes from the dev image; the sim-side bridge is sim-bridge.sh.
+# The binary comes from the dev image; the sim-side bridge is simulation/sim-bridge.sh.
 set -euo pipefail
 
 LOG=/tmp/sim-bridge.log
+export ROS_DISTRO="${ROS_DISTRO:-jazzy}"
 
-if pgrep -x zenoh-bridge-ros2dds >/dev/null; then
+if pgrep -f '[z]enoh-bridge-ros2dds' >/dev/null; then
     echo "sim-bridge already running (log: $LOG)"
     exit 0
 fi
