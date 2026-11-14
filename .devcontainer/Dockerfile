@@ -203,7 +203,7 @@ RUN echo "numpy<2" > /tmp/constraints.txt \
 # Zenoh bridge to the simulator (see docs/simulation.mdx)
 # ------------------------------------
 
-# Must match VERSION in sim-bridge.sh.
+# Must match VERSION in simulation/sim-bridge.sh.
 ARG ZENOH_BRIDGE_VERSION=1.10.1
 ARG TARGETARCH
 RUN case "${TARGETARCH}" in \

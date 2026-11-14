@@ -92,16 +92,5 @@
     },
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingModuleSource": "none"
-    },
-    "cursorpyright.analysis.diagnosticSeverityOverrides": {
-        "reportMissingModuleSource": "none"
-    },
-    "cursorpyright.analysis.exclude": [
-        "./build",
-        "./install",
-        "./log",
-        "**/node_modules",
-        "**/__pycache__",
-        "**/.*"
-    ]
+    }
 }
