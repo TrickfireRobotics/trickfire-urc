@@ -18,19 +18,8 @@ ENV LANG=en_US.UTF-8 \
     NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ca-certificates \
-    cmake \
-    curl \
-    git \
-    gnupg2 \
-    less \
     locales \
-    lsb-release \
     openssh-client \
-    sudo \
-    tzdata \
-    udev \
     wget \
     zstd \
     file \
@@ -128,8 +117,10 @@ ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
     TZ=UTC
+TZ=UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     build-essential \
     ca-certificates \
     clang-format \
