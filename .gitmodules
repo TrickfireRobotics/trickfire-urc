@@ -1,3 +1,6 @@
 [submodule "src-platform/ublox_ws"]
 	path = src-platform/ublox_ws
 	url = https://github.com/gokulp01/ros2-ublox-zedf9p.git
+[submodule "src-platform/zed-ros2-wrapper"]
+	path = src-platform/zed-ros2-wrapper
+	url = https://github.com/stereolabs/zed-ros2-wrapper.git
