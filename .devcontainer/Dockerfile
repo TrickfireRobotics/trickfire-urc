@@ -33,12 +33,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
     wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
     echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
-        > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
     apt-get update && apt-get install -y --no-install-recommends "${CUDA_TOOLKIT_PKG}" && \
     rm -rf /var/lib/apt/lists/* \
-        /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
-        /etc/apt/preferences.d/nvidia-repo-pin-600 \
-        /etc/apt/trusted.gpg.d/jetson-ota-public.asc
+    /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    /etc/apt/preferences.d/nvidia-repo-pin-600 \
+    /etc/apt/trusted.gpg.d/jetson-ota-public.asc
 
 # ------------------------------------
 # Zed sdk installer
@@ -130,7 +130,7 @@ RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
     && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
     && chmod 0440 /etc/sudoers.d/trickfire
-
+RUN pip install Jetson.GPIO
 USER trickfire
 COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
 WORKDIR /home/trickfire/trickfire-urc
