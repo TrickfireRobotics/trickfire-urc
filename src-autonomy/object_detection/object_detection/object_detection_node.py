@@ -131,7 +131,7 @@ class ObjectDetectionNode(Node):
             self.get_logger().debug(f"Published {len(detection_array.detections)} detections")
 
         except Exception as e:
-            self.get_logger().error(f"Error processing image: {str(e)}")
+            self.get_logger().error(f"Error processing image: {e!s}")
 
 
 def main(args=None):
