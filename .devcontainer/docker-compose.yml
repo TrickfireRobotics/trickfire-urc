@@ -9,6 +9,12 @@ services:
     user: trickfire
     environment:
       TZ: ${TZ:-UTC}
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+    # Zenoh bridge to the simulator, started in-container by postStartCommand,
+    # since DDS multicast discovery can't cross the Docker boundary.
+    # See docs/simulation.mdx.
+    ports:
+      - "127.0.0.1:7447:7447"
     volumes:
       - type: bind
         source: ..
@@ -20,7 +26,6 @@ services:
         bind:
           create_host_path: true
     working_dir: /home/trickfire/trickfire-urc
-    network_mode: host
     privileged: true
     security_opt:
       - seccomp:unconfined
