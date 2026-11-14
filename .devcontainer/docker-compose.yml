@@ -29,9 +29,6 @@ services:
     privileged: true
     security_opt:
       - seccomp:unconfined
-    privileged: true
-    security_opt:
-      - seccomp:unconfined
     stdin_open: true
     tty: true
 
