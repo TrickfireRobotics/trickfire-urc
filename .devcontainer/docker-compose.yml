@@ -26,7 +26,6 @@ services:
         bind:
           create_host_path: true
     working_dir: /home/trickfire/trickfire-urc
-    network_mode: host
     privileged: true
     security_opt:
       - seccomp:unconfined

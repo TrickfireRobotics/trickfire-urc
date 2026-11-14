@@ -9,6 +9,7 @@ ARG ZED_SDK_PATCH=0
 ARG L4T_MAJOR=39
 ARG L4T_MINOR=2
 ARG ROS_APT_SOURCE_VERSION=1.3.0
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
     TZ=UTC \
@@ -18,8 +19,19 @@ ENV LANG=en_US.UTF-8 \
     NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    cmake \
+    curl \
+    git \
+    gnupg2 \
+    less \
     locales \
+    lsb-release \
     openssh-client \
+    sudo \
+    tzdata \
+    udev \
     wget \
     zstd \
     file \
@@ -71,6 +83,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-colcon-common-extensions \
     python3-rosdep \
     ros-jazzy-ros-base \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    ros-jazzy-ros-base \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
@@ -114,6 +129,9 @@ WORKDIR /home/trickfire/trickfire-urc
 FROM ubuntu:24.04 AS dev
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ROS_APT_SOURCE_VERSION=1.3.0
+FROM ubuntu:24.04 AS dev
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
     TZ=UTC
@@ -129,16 +147,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clangd \
     cmake \
     curl \
+    curl \
     gdb \
     git \
     locales \
     openssh-client \
     pipx \
     procps \
+    procps \
     python3-pip \
     shfmt \
     sudo \
     tzdata \
+    unzip \
     unzip \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
@@ -162,12 +183,15 @@ RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-colcon-common-extensions \
     python3-rosdep \
+    python3-colcon-common-extensions \
+    python3-rosdep \
     ros-jazzy-desktop \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
     ros-jazzy-pinocchio \
     ros-jazzy-coal \
+    && rosdep init \
     && rosdep init \
     && rm -rf /var/lib/apt/lists/*
 
@@ -192,17 +216,6 @@ RUN case "${TARGETARCH}" in \
     && unzip -oq /tmp/zenoh-bridge.zip zenoh-bridge-ros2dds -d /usr/local/bin \
     && chmod +x /usr/local/bin/zenoh-bridge-ros2dds \
     && rm /tmp/zenoh-bridge.zip
-
-# RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
-#     && groupmod --new-name trickfire ubuntu \
-#     # && usermod -aG video trickfire \
-#     && usermod -aG video,zed trickfire \
-#     && mkdir -p /home/trickfire/trickfire-urc \
-#     && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
-#     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
-#     && chmod 0440 /etc/sudoers.d/trickfire
-
-RUN echo /usr/local/zed/lib > /etc/ld.so.conf.d/zed.conf && ldconfig
 
 RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
     && groupmod --new-name trickfire ubuntu \
