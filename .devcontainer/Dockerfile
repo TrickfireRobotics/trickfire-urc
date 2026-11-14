@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:24.04 AS prod
+FROM ubuntu:24.04 AS rover
 ARG DEBIAN_FRONTEND=noninteractive
 ARG L4T_RELEASE=r39.2
 ARG CUDA_TOOLKIT_PKG=cuda-toolkit-13-2
@@ -8,11 +8,11 @@ ARG ZED_SDK_MINOR=5
 ARG ZED_SDK_PATCH=0
 ARG L4T_MAJOR=39
 ARG L4T_MINOR=2
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
     TZ=UTC \
-    PIXI_HOME=/opt/pixi \
-    PATH=/opt/pixi/bin:/usr/local/cuda/bin:${PATH} \
+    PATH=/usr/local/cuda/bin:${PATH} \
     LD_LIBRARY_PATH=/usr/local/cuda/lib64 \
     NVIDIA_VISIBLE_DEVICES=all \
     NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
@@ -33,6 +33,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     udev \
     wget \
     zstd \
+    file \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
@@ -64,24 +65,49 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
     && rm -rf /tmp/ZED_SDK_Linux.run /usr/local/zed/resources/* \
     && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
 
-RUN curl -fsSL https://pixi.sh/install.sh | \
-    env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
+# ------------------------------------
+# ROS Jazzy apt repository
+# ------------------------------------
 
-# -----------------------------------
-# gps support using ros2-ublox-zedf9p
-# -----------------------------------
+RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
+    "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    && dpkg -i /tmp/ros2-apt-source.deb \
+    && rm /tmp/ros2-apt-source.deb
 
-RUN git submodule update --init
+# ------------------------------------
+# ROS packages used at runtime
+# ------------------------------------
 
-# -----------------------------------
-# create trickfire user
-# -----------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    ros-jazzy-ros-base \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-vision-opencv \
+    && rosdep init \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN useradd trickfire \
-    --shell /bin/bash \
-    --create-home \
-    --no-log-init \
-    -G video \
+# ------------------------------------
+# ZED ROS 2 wrapper (source in src-platform/zed-ros2-wrapper, installed to /opt/zed_ws)
+# ------------------------------------
+
+RUN --mount=type=bind,source=src-platform/zed-ros2-wrapper,target=/tmp/zed-ros2-wrapper \
+    apt-get update \
+    && rosdep update --rosdistro jazzy \
+    && rosdep install --from-paths /tmp/zed-ros2-wrapper --ignore-src -r -y --rosdistro jazzy \
+    && . /opt/ros/jazzy/setup.sh \
+    && colcon --log-base /tmp/zed_log build \
+    --base-paths /tmp/zed-ros2-wrapper \
+    --build-base /tmp/zed_build \
+    --install-base /opt/zed_ws/install \
+    --packages-skip zed_debug \
+    --cmake-args -DCMAKE_BUILD_TYPE=Release \
+    && rm -rf /var/lib/apt/lists/* /root/.ros/rosdep /tmp/zed_build /tmp/zed_log
+
+RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
+    && groupmod --new-name trickfire ubuntu \
+    && usermod -aG video,zed trickfire \
     && mkdir -p /home/trickfire/trickfire-urc \
     && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
@@ -91,39 +117,105 @@ USER trickfire
 COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
 WORKDIR /home/trickfire/trickfire-urc
 
+
 # ------------------------------------
 # Dev setup
 # ------------------------------------
 
 FROM ubuntu:24.04 AS dev
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_APT_SOURCE_VERSION=1.3.0
 
 ENV LANG=en_US.UTF-8 \
-    TZ=UTC \
-    PIXI_HOME=/opt/pixi \
-    PATH=/opt/pixi/bin:${PATH}
+    TZ=UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     ca-certificates \
+    clang-format \
+    clang-tidy \
+    clang-tools \
+    clangd \
+    cmake \
     curl \
+    gdb \
     git \
     locales \
     openssh-client \
+    pipx \
+    procps \
+    python3-pip \
+    shfmt \
     sudo \
     tzdata \
+    unzip \
     && locale-gen en_US.UTF-8 \
     && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
     && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
     && echo "${TZ}" > /etc/timezone \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL https://pixi.sh/install.sh | \
-    env PIXI_HOME=/opt/pixi PIXI_NO_PATH_UPDATE=1 bash
+# ------------------------------------
+# ROS Jazzy apt repository
+# ------------------------------------
 
-RUN useradd trickfire \
-    --shell /bin/bash \
-    --create-home \
-    --no-log-init \
-    -G video \
+RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
+    "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    && dpkg -i /tmp/ros2-apt-source.deb \
+    && rm /tmp/ros2-apt-source.deb
+
+# ------------------------------------
+# ROS packages used for development
+# ------------------------------------
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    ros-jazzy-desktop \
+    ros-jazzy-rosbridge-server \
+    ros-jazzy-cv-bridge \
+    ros-jazzy-vision-opencv \
+    ros-jazzy-pinocchio \
+    ros-jazzy-coal \
+    && rosdep init \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
+    && PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pre-commit \
+    && chmod -R a+rX /opt/pipx
+
+# ------------------------------------
+# Zenoh bridge to the simulator (see docs/simulation.mdx)
+# ------------------------------------
+
+# Must match VERSION in simulation/sim-bridge.sh.
+ARG ZENOH_BRIDGE_VERSION=1.10.1
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+    amd64) target=x86_64-unknown-linux-gnu ;; \
+    arm64) target=aarch64-unknown-linux-gnu ;; \
+    *) echo "unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac \
+    && curl -fsSL -o /tmp/zenoh-bridge.zip \
+    "https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds/releases/download/${ZENOH_BRIDGE_VERSION}/zenoh-plugin-ros2dds-${ZENOH_BRIDGE_VERSION}-${target}-standalone.zip" \
+    && unzip -oq /tmp/zenoh-bridge.zip zenoh-bridge-ros2dds -d /usr/local/bin \
+    && chmod +x /usr/local/bin/zenoh-bridge-ros2dds \
+    && rm /tmp/zenoh-bridge.zip
+
+# RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
+#     && groupmod --new-name trickfire ubuntu \
+#     # && usermod -aG video trickfire \
+#     && usermod -aG video,zed trickfire \
+#     && mkdir -p /home/trickfire/trickfire-urc \
+#     && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
+#     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
+#     && chmod 0440 /etc/sudoers.d/trickfire
+
+RUN echo /usr/local/zed/lib > /etc/ld.so.conf.d/zed.conf && ldconfig
+
+RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
+    && groupmod --new-name trickfire ubuntu \
+    && usermod -aG video trickfire \
     && mkdir -p /home/trickfire/trickfire-urc \
     && chown -R trickfire:trickfire /home/trickfire/trickfire-urc \
     && echo "trickfire ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/trickfire \
