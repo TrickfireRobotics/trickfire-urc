@@ -106,7 +106,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------
-<<<<<<< HEAD
 # Ultralytics YOLO26 (object detection)
 # ------------------------------------
 
@@ -120,7 +119,8 @@ RUN echo "numpy<2" > /tmp/constraints.txt \
     && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
     "ultralytics==${ULTRALYTICS_VERSION}" \
     && rm /tmp/constraints.txt
-=======
+
+# ------------------------------------
 # ZED ROS 2 wrapper (source in src-platform/zed-ros2-wrapper, installed to /opt/zed_ws)
 # ------------------------------------
 
@@ -136,7 +136,6 @@ RUN --mount=type=bind,source=src-platform/zed-ros2-wrapper,target=/tmp/zed-ros2-
     --packages-skip zed_debug \
     --cmake-args -DCMAKE_BUILD_TYPE=Release \
     && rm -rf /var/lib/apt/lists/* /root/.ros/rosdep /tmp/zed_build /tmp/zed_log
->>>>>>> origin/main
 
 RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
     && groupmod --new-name trickfire ubuntu \
