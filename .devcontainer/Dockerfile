@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     cmake \
     curl \
+    file \
     git \
     gnupg2 \
     less \
@@ -32,13 +33,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata \
     udev \
     wget \
-    zstd \
-    file \
-    && locale-gen en_US.UTF-8 \
-    && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
-    && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
-    && echo "${TZ}" > /etc/timezone \
-    && rm -rf /var/lib/apt/lists/*
+    zstd && \
+    locale-gen en_US.UTF-8 && \
+    update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && \
+    ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && \
+    echo "${TZ}" > /etc/timezone && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN wget -q -P /etc/apt/trusted.gpg.d https://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
+    wget -q -P /etc/apt/preferences.d https://repo.download.nvidia.com/jetson/nvidia-repo-pin-600 && \
+    echo "deb https://repo.download.nvidia.com/jetson/common ${L4T_RELEASE} main" \
+    > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    "${CUDA_TOOLKIT_PKG}" \
+    nvidia-tensorrt \
+    nvidia-tensorrt-dev && \
+    rm -rf /var/lib/apt/lists/* \
+    /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
+    /etc/apt/preferences.d/nvidia-repo-pin-600 \
+    /etc/apt/trusted.gpg.d/jetson-ota-public.asc
 
 # -----------------------------------
 # Nvidia Jetson
@@ -63,7 +76,8 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
     && chmod +x /tmp/ZED_SDK_Linux.run \
     && /tmp/ZED_SDK_Linux.run silent skip_tools skip_drivers skip_cuda \
     && rm -rf /tmp/ZED_SDK_Linux.run /usr/local/zed/resources/* \
-    && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so
+    && ln -sf /usr/lib/aarch64-linux-gnu/tegra/libv4l2.so.0 /usr/lib/aarch64-linux-gnu/libv4l2.so \
+    && chmod -R a+rX /usr/local/lib/python3.12/dist-packages
 
 # ------------------------------------
 # ROS Jazzy apt repository
