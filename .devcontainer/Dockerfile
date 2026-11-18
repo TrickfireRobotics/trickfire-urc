@@ -172,6 +172,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gdb \
     git \
+    git-lfs \
     locales \
     openssh-client \
     pipx \
