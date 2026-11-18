@@ -34,7 +34,6 @@ def generate_launch_description() -> LaunchDescription:
                 output="screen",
                 parameters=[
                     {
-                        # Follow the ZED namespace so renaming the camera doesn't orphan the detector.
                         "image_topic": [
                             "/",
                             LaunchConfiguration("zed_camera_name"),
