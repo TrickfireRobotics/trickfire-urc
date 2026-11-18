@@ -20,7 +20,6 @@ setup(
     maintainer_email="dev@trickfirerobotics.com",
     description="Launch files for the TrickFire URC rover.",
     license="MIT",
-    tests_require=["pytest"],
     entry_points={
         "console_scripts": [],
     },
