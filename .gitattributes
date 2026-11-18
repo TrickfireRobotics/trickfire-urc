@@ -1,4 +1,6 @@
-# Container configuration and scripts need Linux line endings on every host.
+# line endings
 .gitattributes text eol=lf
 .devcontainer/** text eol=lf
+
+# git lfs https://git-lfs.com/
 *.pt filter=lfs diff=lfs merge=lfs -text
