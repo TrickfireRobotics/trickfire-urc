@@ -33,11 +33,15 @@ class ObjectDetectionNode(Node):
         model_task: str = str(self.get_parameter("model_task").value)
         self.inference_size = int(self.get_parameter("inference_size").value)
 
+        model_path = os.path.join(
+            get_package_share_directory("object_detection"), "models", model_name
+        )
+
         # Initialize CV Bridge
         self.bridge = CvBridge()
 
-        self.get_logger().info(f"Loading YOLO model")
-        self.model = YOLO(model=str(model_name), task=str(model_task), verbose=True)
+        self.get_logger().info(f"Loading YOLO model from {model_path}")
+        self.model = YOLO(model=model_path, task=str(model_task), verbose=True)
         self.get_logger().info("YOLO model loaded successfully")
 
         # Create subscriber and publishers
