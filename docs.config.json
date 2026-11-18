@@ -2,5 +2,12 @@
     "$schema": "https://docs.trickfirerobotics.com/docs.config.schema.json",
     "name": "TrickFire URC",
     "description": "Main codebase for the <name> rover for the University Rover Challenge",
-    "icon": "Bot"
+    "icon": "Bot",
+    "sidebar": [
+        { "label": "Getting Started", "slug": "getting-started" },
+        { "label": "Architecture", "slug": "architecture" },
+        { "label": "Creating a Package", "slug": "creating-a-package" },
+        { "label": "Building, Launching, and Testing", "slug": "building-and-testing" },
+        { "label": "Connecting to the Simulator", "slug": "simulation" }
+    ]
 }
