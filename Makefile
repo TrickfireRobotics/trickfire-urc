@@ -43,3 +43,6 @@ format:
 
 hooks:
 	pre-commit install
+
+attach:
+	docker exec -it -e TERM=xterm-256color -e COLORTERM=truecolor trickfire-urc bash

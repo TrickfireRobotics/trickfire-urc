@@ -1,0 +1,71 @@
+---
+title: Creating a Package
+description: Scaffold a new ROS 2 package with ros2 pkg create, then clean up the boilerplate it generates.
+---
+
+New code goes into its own ROS 2 package, placed in `src-autonomy/` or `src-platform/` depending on which side of the [architecture](./architecture.mdx) it belongs to. All of this runs inside the devcontainer.
+
+## Scaffold the package
+
+```bash
+cd src-autonomy   # or src-platform
+ros2 pkg create --build-type ament_python <package_name>
+```
+
+Use `--build-type ament_cmake` instead for a C++ package.
+
+## Clean up the generated boilerplate
+
+`ros2 pkg create` scaffolds a few things this repo doesn't use. Remove them before committing:
+
+<Steps>
+    <Step>
+        **Delete the generated `test/` folder.** It ships three placeholder pytest files
+        (`test_copyright.py`, `test_flake8.py`, `test_pep257.py`) that duplicate what [Ruff
+        already checks](./building-and-testing.mdx#formatting-and-linting) for this repo:
+
+        ```bash
+        rm -rf <package_name>/test
+        ```
+
+        Also drop `tests_require=["pytest"]` from `setup.py` if `ros2 pkg create` added it - there's
+        nothing left in the package that needs it.
+    </Step>
+    <Step>
+        **Fix the license and description.** `ros2 pkg create` defaults to `TODO: License
+        declaration` / `TODO: Package description` (or `Apache-2.0`, depending on your `ros2 pkg
+        create` config). This repo's packages use `MIT`:
+
+        ```xml title="package.xml"
+        <description>What this package actually does.</description>
+        <license>MIT</license>
+        ```
+
+        ```python title="setup.py"
+        description="What this package actually does.",
+        license="MIT",
+        ```
+    </Step>
+</Steps>
+
+<Callout type="idea" title="Use an existing package as a template">
+    `src-autonomy/rover_launch` already has both of these fixes applied. Copying its
+    `package.xml` and `setup.py` as a starting point is faster than fixing the defaults by hand
+    every time.
+</Callout>
+
+## Wire it into the build
+
+If another package in this repo depends on the new one (for example, a launch package that
+launches it), add it as a dependency in that package's `package.xml`:
+
+```xml
+<exec_depend>your_new_package</exec_depend>
+```
+
+Then build it - see [Building, Launching, and Testing](./building-and-testing.mdx#building) for
+building a single package instead of the whole workspace.
+
+```bash
+make build
+```
