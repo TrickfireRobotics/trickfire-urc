@@ -4,9 +4,8 @@ This module contains objects representing the RMD-X8 motor state and settings fo
 
 from dataclasses import dataclass
 
-from myactuator_rmd_py.actuator_state import AccelerationType, MotorStatus1, MotorStatus2, PiGains
-
 from lib.motor_state.can_motor_state import CanMotorRunSettings, CANMotorState
+from myactuator_rmd_py.actuator_state import AccelerationType, MotorStatus1, MotorStatus2, PiGains
 
 DEGS_TO_REVS = 1 / 360
 

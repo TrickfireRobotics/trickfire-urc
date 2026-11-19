@@ -5,14 +5,13 @@ motor on the robot.
 
 from typing import Callable
 
-from rclpy.node import Node
-from rclpy.subscription import Subscription
-from std_msgs.msg import String
-
 from lib.configs import MotorConfig, MotorConfigs, MotorTypes
 from lib.motor_state.can_motor_state import CANMotorState
 from lib.motor_state.moteus_motor_state import MoteusMotorState
 from lib.motor_state.rmd_motor_state import RMDX8MotorState
+from rclpy.node import Node
+from rclpy.subscription import Subscription
+from std_msgs.msg import String
 
 
 class RobotInfo:  # pylint: disable=too-few-public-methods

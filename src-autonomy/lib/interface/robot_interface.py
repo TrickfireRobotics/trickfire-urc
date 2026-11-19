@@ -5,12 +5,11 @@ motors on the robot.
 
 import math
 
+from lib.configs import MotorConfig, MotorConfigs
+from lib.motor_state.can_motor_state import CanMotorRunSettings
 from rclpy.node import Node
 from rclpy.publisher import Publisher
 from std_msgs.msg import String
-
-from lib.configs import MotorConfig, MotorConfigs
-from lib.motor_state.can_motor_state import CanMotorRunSettings
 
 REVS_TO_RADIANS = math.pi * 2
 RADIANS_TO_REVS = 1 / REVS_TO_RADIANS

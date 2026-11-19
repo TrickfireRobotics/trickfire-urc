@@ -5,9 +5,8 @@ This module contains objects representing the moteus motor state and settings fo
 from dataclasses import dataclass
 
 import moteus
-from moteus.moteus import Result
-
 from lib.motor_state.can_motor_state import CanMotorRunSettings, CANMotorState
+from moteus.moteus import Result
 
 
 @dataclass(frozen=True, kw_only=True)
