@@ -1,121 +1,115 @@
-"""
-This moudle contains the logic for setup and operation of the Camera node
-
-Classes included are CameraNode which handles setup and initialization of the node itself.
-"""
-
 import threading
 
 import cv2 as cv
 import rclpy
-from cv2.typing import MatLike
 from cv_bridge import CvBridge
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from sensor_msgs.msg import CompressedImage
 
+# ---------------------------------------------------------------------------- #
+#                                    Config                                    #
+# ---------------------------------------------------------------------------- #
 
-def getCameras() -> list[int]:
-    """
-    Returns a list of active camera ID's
-    """
+QUEUE_SIZE = 10
+FRAME_PERIOD_SEC = 0.1  # ~10 fps
 
-    NON_WORKING_PORT_THRESHOLD = 6
+# stop probing for camera devices once this many have failed to open
+MAX_CLOSED_PORTS = 6
 
-    # Property ID's for width and height of the camera feed
-    WIDTH_PROPERTY_ID = 3
-    HEIGHT_PROPERTY_ID = 4
+# ---------------------------------------------------------------------------- #
+#                               Camera Discovery                               #
+# ---------------------------------------------------------------------------- #
 
-    non_working_ports = 0
+
+def get_available_cameras() -> list[int]:
+    """Probes device ports in order and returns the ids of the ones that produce frames"""
+    working_ports: list[int] = []
+    closed_ports = 0
     dev_port = 0
-    working_ports = []
 
-    while non_working_ports < NON_WORKING_PORT_THRESHOLD:
+    # closed_ports is a running total, not a streak, so one bad port early on still
+    # counts toward the threshold even if every port after it opens fine
+    while closed_ports < MAX_CLOSED_PORTS:
         camera = cv.VideoCapture(dev_port)
-        if not camera.isOpened():
-            non_working_ports += 1
-        else:
+        if camera.isOpened():
             is_reading, _ = camera.read()
-            _ = camera.get(WIDTH_PROPERTY_ID)
-            _ = camera.get(HEIGHT_PROPERTY_ID)
             if is_reading:
                 working_ports.append(dev_port)
             camera.release()
+        else:
+            closed_ports += 1
+
         dev_port += 1
 
     return working_ports
 
 
+# ---------------------------------------------------------------------------- #
+#                                   ROS Node                                   #
+# ---------------------------------------------------------------------------- #
+
+
 class CameraNode(Node):
-    """A node for handling camera operations."""
+    """Publishes compressed frames from a single camera device"""
 
-    def __init__(self, topicName: str, camera: int) -> None:
+    def __init__(self, topic_name: str, camera_id: int) -> None:
+        super().__init__(f"camera_node_{camera_id}")
 
-        PUBLISHER_QUEUE_SIZE = 10
-        FRAME_PUBLISH_TIMER_PERIOD_SECONDS = 0.1
+        self._camera_id = camera_id
+        self.declare_parameter("camera_id", camera_id)
 
-        self.FRAME_PUBLISHER_TOPIC = f"{topicName}/compressed"
+        self._capture = cv.VideoCapture(camera_id)
+        self._capture_lock = threading.Lock()
+        self._bridge = CvBridge()
 
-        super().__init__(f"camera_node_{camera}")
-
-        self.get_logger().info(f"Launching Camera Node: {camera}")
-
-        self._framePublisher = self.create_publisher(
-            CompressedImage, self.FRAME_PUBLISHER_TOPIC, PUBLISHER_QUEUE_SIZE
+        self._frame_publisher = self.create_publisher(
+            CompressedImage, f"{topic_name}/compressed", QUEUE_SIZE
         )
+        self._frame_timer = self.create_timer(FRAME_PERIOD_SEC, self._publish_frame)
 
-        self.frameTimer = self.create_timer(
-            FRAME_PUBLISH_TIMER_PERIOD_SECONDS, self._publishCameraFrame
-        )
-
-        self.frameCapture = cv.VideoCapture(camera)
-        self.bridge = CvBridge()
-
-        self._camera_lock = threading.Lock()
-
-        self._camera_id = camera
-        self.declare_parameter("camera_id", camera)
-
-    def _publishCameraFrame(self) -> None:
-        """
-        Callback function to publish a camera frame to the specified topic.
-        """
-        with self._camera_lock:
-            ret, frame = self.frameCapture.read()
-
-        if ret:
-            msg = self.bridge.cv2_to_compressed_imgmsg(frame, dst_format="jpg")
-            msg.header.stamp = self.get_clock().now().to_msg()
-            msg.header.frame_id = f"camera_{self._camera_id}_optical_frame"
-
-            self._framePublisher.publish(msg)
+        self.get_logger().info(f"camera_node_{camera_id} started, publishing to {topic_name}")
 
     def destroy_node(self) -> None:
-        """
-        Ensures the camera hardware is released when the node is shut down.
-        """
-        if hasattr(self, "frameCapture") and self.frameCapture.isOpened():
-            self.frameCapture.release()
+        """Releases the camera device before the node shuts down"""
+        if hasattr(self, "_capture") and self._capture.isOpened():
+            self._capture.release()
         super().destroy_node()
+
+    # ------------------------------------------------------------------------ #
+    #                                 Internals                                #
+    # ------------------------------------------------------------------------ #
+
+    def _publish_frame(self) -> None:
+        with self._capture_lock:
+            got_frame, frame = self._capture.read()
+
+        if not got_frame:
+            return
+
+        msg = self._bridge.cv2_to_compressed_imgmsg(frame, dst_format="jpg")
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = f"camera_{self._camera_id}_optical_frame"
+        self._frame_publisher.publish(msg)
+
+
+# ---------------------------------------------------------------------------- #
+#                                  Entrypoint                                  #
+# ---------------------------------------------------------------------------- #
 
 
 def main(args: list[str] | None = None) -> None:
-    """
-    Entry point for the camera node.
-    """
-
     rclpy.init(args=args)
 
     try:
-        executor = MultiThreadedExecutor()
-        nodes = []
-        camera_num = 0
+        nodes = [
+            CameraNode(f"/camera_{topic_index}/image", camera_id)
+            for topic_index, camera_id in enumerate(get_available_cameras())
+        ]
 
-        for camera in getCameras():
-            node = CameraNode(f"/camera_{camera_num}/image", camera)
-            nodes.append(node)
+        executor = MultiThreadedExecutor()
+        for node in nodes:
             executor.add_node(node)
-            camera_num += 1
 
         try:
             executor.spin()

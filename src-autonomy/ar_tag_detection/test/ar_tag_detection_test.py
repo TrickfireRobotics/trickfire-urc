@@ -12,7 +12,7 @@ unit_under_test = TagDetectionLogic(wanted_tag_type)
 def generate_4x4_50_test_markers(
     output_dir: Path, amount: int = 5, marker_size: int = 200, sequential_ids: bool = True
 ) -> list:
-    """Generates ArUco marker images into a target directory with unique IDs."""
+    """Generates ArUco marker images into a target directory with unique IDs"""
     output_dir.mkdir(exist_ok=True, parents=True)
 
     if sequential_ids:

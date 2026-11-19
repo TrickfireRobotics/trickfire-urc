@@ -40,7 +40,7 @@ class Heartbeat(Node):
         self.get_logger().info("heartbeat_node started")
 
     def add_connection_listener(self, listener: ConnectionListener) -> None:
-        """Get called with the new state whenever the connection drops or comes back."""
+        """Get called with the new state whenever the connection drops or comes back"""
         self._listeners.append(listener)
 
     # ---------------------------------------------------------------------------- #
