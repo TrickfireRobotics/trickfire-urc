@@ -1,0 +1,6 @@
+# Overrides applied on top of zed_wrapper's common_stereo.yaml and <camera_model>.yaml.
+---
+/**:
+    ros__parameters:
+        pos_tracking:
+            pos_tracking_enabled: false
