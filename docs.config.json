@@ -9,9 +9,10 @@
         {
             "label": "Modules",
             "items": [
-                { "label": "AR Tag detection", "slug": "modules/ar-tag-detection" },
                 { "label": "Camera", "slug": "deployment/camera" },
-                { "label": "Camera-Calibration", "slug": "modules/camera-calibration" }
+                { "label": "Camera-Calibration", "slug": "modules/camera-calibration" },
+                { "label": "AR Tag detection", "slug": "modules/ar-tag-detection" },
+                { "label": "Object detection", "slug": "modules/object-detection" }
             ]
         },
         { "label": "Creating a Package", "slug": "creating-a-package" },

@@ -3,11 +3,11 @@ title: Object Detection
 description: Object detection on the rover.
 ---
 
-The object detection for the rover runs using YOLO26 provided by Ultralytics. The model is 
+The object detection for the rover runs using YOLO26 provided by Ultralytics. The model is
 pre-trained to detect a wide variety of objects, but is not finetuned to train anything specific at the moment.
 
-Object detection lives in the object_detection package and currently contains a script to detect all 
-objects found in the results of the models scan and draw bounding boxes around them with labels and 
+Object detection lives in the object_detection package and currently contains a script to detect all
+objects found in the results of the models scan and draw bounding boxes around them with labels and
 confidence ratings.
 
 The object detection node subscribes and publishes to the following topics to the following topics.
