@@ -1,0 +1,56 @@
+---
+title: Architecture
+description: How src-autonomy and src-platform divide responsibility, and the rule for how they're allowed to talk to each other.
+---
+
+The rover's code is split across two ROS 2 workspaces, `src-autonomy/` and `src-platform/`. The split is about altitude: `src-autonomy` thinks in terms of missions and goals, `src-platform` thinks in terms of motors and sensors.
+
+```
+src-autonomy/    # high level: mission control / autonomy, decisions, requests
+src-platform/    # low level: drivers, hardware I/O, raw sensor data
+```
+
+## The rule
+
+Packages in one workspace never call code in the other directly - no imports, no function calls across the boundary. The only way they interact is by publishing and subscribing to ROS topics (or services/actions).
+
+<Callout type="warning" title="No cross-workspace imports">
+    If a node in `src-autonomy` needs something from `src-platform` (or the other way round), the
+    answer is a topic, not a Python import. Reaching across the boundary directly defeats the
+    point of the split - the two sides stop being independently testable and swappable.
+</Callout>
+
+## Data flow
+
+`src-platform` owns the hardware. It reads raw sensors and drives motors, and republishes what it reads as high-level, already-formatted ROS messages - odometry, images, telemetry - rather than raw bytes off a wire. `src-autonomy` never talks to hardware directly; it consumes those formatted topics, decides what to do (either by forwarding to mission control or by running autonomous behavior), and publishes its decisions - motor commands, requests - back out as topics for `src-platform` to act on.
+
+```
+                 formatted sensor data (odometry, images, telemetry)
+  src-platform  ───────────────────────────────────────────────────►  src-autonomy
+  (drivers, hardware I/O)                                              (mission control / autonomy)
+                 ◄───────────────────────────────────────────────────
+                      motor commands, requests
+```
+
+Concretely:
+
+- `src-platform` reads a sensor or drives a motor, and publishes the result as a ROS message any subscriber can use, without that subscriber needing to know anything about the underlying hardware.
+- `src-autonomy` subscribes to those topics, runs mission control or autonomy on top of them, and publishes commands.
+- `src-platform` subscribes to those commands and acts on them, closing the loop.
+
+## `src-autonomy/`
+
+The ROS 2 workspace containing high level code - mission control integration and autonomous behavior.
+
+### `rover_launch`
+
+Launch files and configuration for bringing the rover up end to end. See [Creating a Package](./creating-a-package.mdx) for how new packages get added alongside it.
+
+## `src-platform/`
+
+The ROS 2 workspace containing low level code - hardware drivers and sensor/motor I/O.
+
+<Callout type="info" title="Empty for now">
+    No packages live here yet. It exists so the boundary is established before hardware code
+    gets written, not retrofitted afterward.
+</Callout>
