@@ -6,6 +6,9 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogI
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+
+heartbeat_node = Node(package="heartbeat", executable="heartbeat", name="heartbeat_node")
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -26,6 +29,7 @@ def generate_launch_description() -> LaunchDescription:
                 default_value="zed",
                 description="Name used for the ZED namespace and TF frames.",
             ),
+            heartbeat_node,
         ]
     )
 
