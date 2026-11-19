@@ -37,8 +37,16 @@ class TagDetectionLogic:
         logger: RcutilsLogger | None = None,
     ) -> None:
         self._detected_tag_type = cv.aruco.getPredefinedDictionary(wanted_tag_type)
-        self._detected_tag_params = cv.aruco.DetectorParameters()
-        self._detector = cv.aruco.ArucoDetector(self._detected_tag_type, self._detected_tag_params)
+        # fallback for < OpenCV 4.7
+        has_new_api = hasattr(cv.aruco, "ArucoDetector")
+        self._detected_tag_params = (
+            cv.aruco.DetectorParameters() if has_new_api else cv.aruco.DetectorParameters_create()
+        )
+        self._detector = (
+            cv.aruco.ArucoDetector(self._detected_tag_type, self._detected_tag_params)
+            if has_new_api
+            else None
+        )
 
         self.bridge = CvBridge()
         self._logger: RcutilsLogger = logger or rclpy.logging.get_logger("tag_detection_logic")
@@ -72,7 +80,12 @@ class TagDetectionLogic:
         """Detects ArUco tags in the given frame and annotates it."""
         converted_frame = self.bridge.imgmsg_to_cv2(frame, desired_encoding="bgr8")
 
-        corners, ids, _ = self._detector.detectMarkers(converted_frame)
+        if self._detector is not None:
+            corners, ids, _ = self._detector.detectMarkers(converted_frame)
+        else:
+            corners, ids, _ = cv.aruco.detectMarkers(
+                converted_frame, self._detected_tag_type, parameters=self._detected_tag_params
+            )
 
         detected_ids = Int32MultiArray()
         detected_corners = Int32MultiArray()
