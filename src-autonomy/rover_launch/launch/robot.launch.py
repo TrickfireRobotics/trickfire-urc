@@ -12,6 +12,8 @@ ar_tag_detection_node = Node(
     package="ar_tag_detection", executable="ar_tag_detection", name="ar_tag_detection"
 )
 
+heartbeat_node = Node(package="heartbeat", executable="heartbeat", name="heartbeat_node")
+
 
 def generate_launch_description() -> LaunchDescription:
     launch_description = LaunchDescription(
@@ -32,6 +34,7 @@ def generate_launch_description() -> LaunchDescription:
                 description="Name used for the ZED namespace and TF frames.",
             ),
             ar_tag_detection_node,
+            heartbeat_node,
         ]
     )
 

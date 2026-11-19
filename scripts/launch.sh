@@ -11,6 +11,8 @@ if [[ ! -f install/setup.bash ]]; then
     exit 1
 fi
 
+export PYTHONPATH="$(pwd)/src-platform/:$(pwd)/src-autonomy/:$PYTHONPATH"
+
 export RCUTILS_COLORIZED_OUTPUT=1
 source "/opt/ros/${ROS_DISTRO:?ROS_DISTRO must be set}/setup.bash"
 # ZED ROS 2 wrapper overlay, only present in the rover image.
