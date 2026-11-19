@@ -54,7 +54,7 @@ def test_draw_detected_markers(tmp_path: Path) -> None:
             cv_image = cv2.imread(str(file_path))
             msg = bridge.cv2_to_compressed_imgmsg(cv_image)
 
-            (frame, ids, _) = unit_under_test.feedFrame(msg)
+            (frame, ids, _) = unit_under_test.feed_frame(msg)
 
             discovered_ids.extend(ids.data)
             uncompressed_frame = bridge.compressed_imgmsg_to_cv2(frame, desired_encoding="bgr8")

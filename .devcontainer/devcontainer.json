@@ -17,7 +17,8 @@
                 "DotJoshJohnson.xml",
                 "mkhl.shfmt",
                 "esbenp.prettier-vscode",
-                "astro-build.astro-vscode"
+                "astro-build.astro-vscode",
+                "idlesilver.smart-separators"
             ]
         }
     }
