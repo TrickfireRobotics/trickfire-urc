@@ -4,14 +4,18 @@
     "description": "Main codebase for the <name> rover for the University Rover Challenge",
     "icon": "Bot",
     "sidebar": [
-        { "label": "Getting Started", "slug": "index" },
+        { "label": "Getting Started", "slug": "getting-started" },
+        { "label": "Architecture", "slug": "architecture" },
         {
             "label": "Modules",
             "items": [
                 { "label": "AR Tag detection", "slug": "modules/ar-tag-detection" },
                 { "label": "Camera", "slug": "deployment/camera" },
-                { "label": "Camera-Calibration", "slug": "modules/camera-calibration"}
+                { "label": "Camera-Calibration", "slug": "modules/camera-calibration" }
             ]
-        }
+        },
+        { "label": "Creating a Package", "slug": "creating-a-package" },
+        { "label": "Building, Launching, and Testing", "slug": "building-and-testing" },
+        { "label": "Connecting to the Simulator", "slug": "simulation" }
     ]
 }

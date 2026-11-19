@@ -1,0 +1,81 @@
+---
+title: Building, Launching, and Testing
+description: The make targets that build the workspace, launch the rover, and check formatting, plus what's running under the hood.
+---
+
+All commands below run inside the devcontainer, from the repo root. `make help` lists every target.
+
+## Building
+
+```bash
+make build
+```
+
+This calls `scripts/build.sh`, which runs `colcon build` over both `src-autonomy/` and
+`src-platform/` with symlink install enabled, so edits to Python files show up without
+rebuilding. On a dev machine (not the rover), the ZED ROS 2 wrapper submodule is skipped if it
+hasn't been checked out, to avoid a noisy build warning for a package you can't build anyway.
+
+<Callout type="info" title="Building a single package">
+    Useful when iterating on one package without rebuilding everything:
+
+    ```bash
+    colcon build --symlink-install --base-paths src-platform src-autonomy --packages-select <package_name>
+    ```
+</Callout>
+
+`make clean` removes `build/`, `install/`, and `log/` for a fresh rebuild.
+
+## Launching
+
+```bash
+make launch
+```
+
+This calls `scripts/launch.sh`, which sources the workspace overlay and runs `ros2 launch
+rover_launch robot.launch.py`. Override either with environment variables:
+
+```bash
+make launch LAUNCH_PACKAGE=my_package LAUNCH_FILE=my_file.launch.py
+```
+
+<Callout type="warning" title="Build first">
+    `launch.sh` checks for `install/setup.bash` and exits with an error if it's missing. Run
+    `make build` at least once before `make launch`.
+</Callout>
+
+## Formatting and linting
+
+CI checks formatting on every push and PR (`.github/workflows/code-style.yml`): Ruff for Python,
+`shfmt` for shell, `clang-format` for C/C++. Run the same checks locally before pushing:
+
+```bash
+ruff check .    # lint
+ruff format .   # format
+```
+
+```bash
+shfmt -d $(git ls-files '*.sh')   # check
+shfmt -w $(git ls-files '*.sh')   # format
+```
+
+Or let `make format` do both at once: Ruff over `src-autonomy`/`src-platform`, `shfmt` over
+`scripts/` and `.devcontainer/`.
+
+This is also what replaces the `test_flake8.py` / `test_pep257.py` boilerplate `ros2 pkg create`
+generates per package - see [Creating a Package](./creating-a-package.mdx#clean-up-the-generated-boilerplate)
+for removing those.
+
+## Testing
+
+If a package has real unit tests (not the generated placeholders), run them with `colcon test`
+the normal ROS 2 way:
+
+```bash
+colcon test --base-paths src-platform src-autonomy --packages-select <package_name>
+colcon test-result --verbose
+```
+
+There's no package with tests like this yet - when one needs them, put them under that package's
+`test/` folder the same way `ros2 pkg create` would have, just without the boilerplate files
+[Creating a Package](./creating-a-package.mdx) has you delete.

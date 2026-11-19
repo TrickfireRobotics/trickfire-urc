@@ -1,0 +1,66 @@
+---
+title: Getting Started
+description: Open the devcontainer, build the workspace, and launch the rover.
+slug: /
+---
+
+This repository holds TrickFire's codebase for the rover competing in the [University Rover Challenge](https://urc.marssociety.org/). It's a pair of ROS 2 workspaces, built and run inside a Docker devcontainer so everyone shares the same toolchain.
+
+## Prerequisites
+
+- [Docker](https://www.docker.com/)
+- [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+
+## Clone and open the container
+
+<Steps>
+    <Step>
+        Clone the repository and open it in VS Code:
+
+        ```bash
+        git clone https://github.com/TrickfireRobotics/trickfire-urc.git
+        cd trickfire-urc
+        code .
+        ```
+    </Step>
+    <Step>
+        When VS Code prompts to reopen in the container, accept it. From a terminal, you can also
+        trigger it yourself with **Dev Containers: Reopen in Container** from the command palette,
+        or build and attach from the host shell:
+
+        ```bash
+        make container
+        ```
+    </Step>
+</Steps>
+
+<Callout type="info" title="Rebuilding the image">
+    After pulling changes to the `.devcontainer/` folder, rebuild with `make container
+    CONTAINER_ARGS="-n -c"` (or **Dev Containers: Rebuild Container** in VS Code) to pick up the
+    new image instead of reusing a stale one.
+</Callout>
+
+## Build the workspace
+
+Everything below runs inside the devcontainer.
+
+```bash
+make build
+```
+
+This runs `colcon build` across both `src-autonomy/` and `src-platform/`. See [Building, Launching, and Testing](./building-and-testing.mdx) for what it does under the hood and how to build a single package.
+
+## Launch the rover
+
+```bash
+make launch
+```
+
+By default this launches `rover_launch`'s `robot.launch.py`. See [Building, Launching, and Testing](./building-and-testing.mdx) for overriding which package and launch file to run.
+
+## Next steps
+
+- [Architecture](./architecture.mdx) - how `src-autonomy` and `src-platform` divide responsibility
+- [Creating a Package](./creating-a-package.mdx) - scaffold a new ROS 2 package in this workspace
+- [Building, Launching, and Testing](./building-and-testing.mdx) - the full `make` workflow
+- [Connecting to the Simulator](./simulation.mdx) - bridge topics to Gazebo running outside the container
