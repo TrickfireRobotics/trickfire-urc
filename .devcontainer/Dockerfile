@@ -85,6 +85,7 @@ RUN wget -q --no-check-certificate -O /tmp/ZED_SDK_Linux.run \
 
 RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
     "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
     && dpkg -i /tmp/ros2-apt-source.deb \
     && rm /tmp/ros2-apt-source.deb
 
@@ -94,13 +95,30 @@ RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-colcon-common-extensions \
+    python3-pip \
     python3-rosdep \
     ros-jazzy-ros-base \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
+    ros-jazzy-vision-msgs \
     && rosdep init \
     && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------
+# Ultralytics YOLO26 (object detection)
+# ------------------------------------
+
+# PyTorch build must match CUDA_TOOLKIT_PKG. NumPy stays on the apt 1.x that
+# cv_bridge is compiled against.
+ARG ULTRALYTICS_VERSION=8.4.208
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cu132
+RUN echo "numpy<2" > /tmp/constraints.txt \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+    --index-url "${TORCH_INDEX_URL}" torch torchvision \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+    "ultralytics==${ULTRALYTICS_VERSION}" \
+    && rm /tmp/constraints.txt
 
 # ------------------------------------
 # ZED ROS 2 wrapper (source in src-platform/zed-ros2-wrapper, installed to /opt/zed_ws)
@@ -154,6 +172,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gdb \
     git \
+    git-lfs \
     locales \
     openssh-client \
     pipx \
@@ -175,6 +194,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN curl -fsSL -o /tmp/ros2-apt-source.deb \
     "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
+    "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.noble_all.deb" \
     && dpkg -i /tmp/ros2-apt-source.deb \
     && rm /tmp/ros2-apt-source.deb
 
@@ -191,12 +211,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-vision-opencv \
     ros-jazzy-pinocchio \
     ros-jazzy-coal \
+    ros-jazzy-vision-msgs \
     && rosdep init \
     && rm -rf /var/lib/apt/lists/*
 
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install ruff==0.15.14 \
     && PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install pre-commit \
     && chmod -R a+rX /opt/pipx
+
+# ------------------------------------
+# Ultralytics YOLO26 (object detection)
+# ------------------------------------
+
+# CPU-only PyTorch keeps the dev image small; prod uses the CUDA build.
+# NumPy stays on the apt 1.x that cv_bridge is compiled against.
+ARG ULTRALYTICS_VERSION=8.4.208
+ARG TORCH_INDEX_URL=https://download.pytorch.org/whl/cpu
+RUN echo "numpy<2" > /tmp/constraints.txt \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+    --index-url "${TORCH_INDEX_URL}" torch torchvision \
+    && pip install --no-cache-dir --break-system-packages -c /tmp/constraints.txt \
+    "ultralytics==${ULTRALYTICS_VERSION}" \
+    && rm /tmp/constraints.txt
 
 # ------------------------------------
 # Zenoh bridge to the simulator (see docs/simulation.mdx)
@@ -209,8 +245,12 @@ RUN case "${TARGETARCH}" in \
     amd64) target=x86_64-unknown-linux-gnu ;; \
     arm64) target=aarch64-unknown-linux-gnu ;; \
     *) echo "unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    amd64) target=x86_64-unknown-linux-gnu ;; \
+    arm64) target=aarch64-unknown-linux-gnu ;; \
+    *) echo "unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
     esac \
     && curl -fsSL -o /tmp/zenoh-bridge.zip \
+    "https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds/releases/download/${ZENOH_BRIDGE_VERSION}/zenoh-plugin-ros2dds-${ZENOH_BRIDGE_VERSION}-${target}-standalone.zip" \
     "https://github.com/eclipse-zenoh/zenoh-plugin-ros2dds/releases/download/${ZENOH_BRIDGE_VERSION}/zenoh-plugin-ros2dds-${ZENOH_BRIDGE_VERSION}-${target}-standalone.zip" \
     && unzip -oq /tmp/zenoh-bridge.zip zenoh-bridge-ros2dds -d /usr/local/bin \
     && chmod +x /usr/local/bin/zenoh-bridge-ros2dds \

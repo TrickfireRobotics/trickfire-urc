@@ -22,14 +22,29 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument(
                 "zed_camera_model",
                 default_value="zed2i",
-                description="ZED camera model passed to zed_wrapper (e.g. zed2i, zedx, zedm).",
+                description="ZED camera model passed to zed_wrapper.",
             ),
             DeclareLaunchArgument(
                 "zed_camera_name",
                 default_value="zed",
                 description="Name used for the ZED namespace and TF frames.",
             ),
-            heartbeat_node,
+            Node(
+                package="object_detection",
+                executable="object_detection_node",
+                name="object_detection",
+                output="screen",
+                parameters=[
+                    {
+                        "image_topic": [
+                            "/",
+                            LaunchConfiguration("zed_camera_name"),
+                            "/zed_node/rgb/color/rect/image",
+                        ],
+                    }
+                ],
+            ),
+            Node(package="heartbeat", executable="heartbeat", name="heartbeat_node"),
         ]
     )
 
@@ -51,6 +66,9 @@ def generate_launch_description() -> LaunchDescription:
             launch_arguments={
                 "camera_model": LaunchConfiguration("zed_camera_model"),
                 "camera_name": LaunchConfiguration("zed_camera_name"),
+                "ros_params_override_path": os.path.join(
+                    get_package_share_directory("rover_launch"), "config", "zed_overrides.yaml"
+                ),
             }.items(),
             condition=IfCondition(LaunchConfiguration("enable_zed")),
         )
