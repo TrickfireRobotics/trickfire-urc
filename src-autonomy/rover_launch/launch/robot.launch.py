@@ -16,22 +16,20 @@ ar_tag_detection_node = Node(
     package="ar_tag_detection", executable="ar_tag_detection", name="ar_tag_detection"
 )
 
-object_detection_node = (
-    Node(
-        package="object_detection",
-        executable="object_detection_node",
-        name="object_detection",
-        output="screen",
-        parameters=[
-            {
-                "image_topic": [
-                    "/",
-                    LaunchConfiguration("zed_camera_name"),
-                    "/zed_node/rgb/color/rect/image",
-                ],
-            }
-        ],
-    ),
+object_detection_node = Node(
+    package="object_detection",
+    executable="object_detection_node",
+    name="object_detection",
+    output="screen",
+    parameters=[
+        {
+            "image_topic": [
+                "/",
+                LaunchConfiguration("zed_camera_name"),
+                "/zed_node/rgb/color/rect/image",
+            ],
+        }
+    ],
 )
 
 # ----------------------------- Launch Arguments ----------------------------- #
