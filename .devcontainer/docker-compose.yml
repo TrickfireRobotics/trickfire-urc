@@ -38,7 +38,6 @@ services:
     profiles: [rover]
     platform: linux/arm64
     runtime: nvidia
-    privileged: true
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -51,7 +50,6 @@ services:
       UDEV: 1
     devices:
       - "/dev/bus/usb:/dev/bus/usb"
-      - "/dev/ttyACM0:/dev/ttyACM0"
     device_cgroup_rules:
       - "c 189:* rmw"
     group_add:

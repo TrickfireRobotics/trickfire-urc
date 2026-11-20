@@ -40,7 +40,7 @@ def generate_launch_description() -> LaunchDescription:
             ),
             DeclareLaunchArgument(
                 "gps_config",
-                default_value="/src-autonomy/config/ublox_f9p.yaml",
+                default_value="/home/trickfire/trickfire-urc/src-autonomy/config/ublox_f9p.yaml",
                 description="Path to the ublox ZED-F9P parameter file.",
             ),
             gps("gps_front", "/dev/gps/front"),

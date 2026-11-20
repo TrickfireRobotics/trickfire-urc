@@ -2,8 +2,16 @@ Label, Serial Hex, Serial TXT
 A - 0x544e4f5246535047 - GPSFRONT
 B - 0x52414552535047 - GPSREAR
 
+To check serials you can run
 udevadm info -q property -n /dev/ttyACM0 | grep ID_SERIAL
+(replace ACM0 with ACM1 if testing other gps)
+
+Sample Output:
 ID_SERIAL=u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_GPSREAR
 ID_SERIAL_SHORT=GPSREAR
 ID_SERIAL=u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_GPSFRONT
 ID_SERIAL_SHORT=GPSFRONT
+
+on host in /etc/udev/rules.d/99-ublox-gps.rules
+SUBSYSTEM=="tty", KERNEL=="ttyACM*", ATTRS{idVendor}=="1546", ATTRS{idProduct}=="01a9", ATTRS{serial}=="GPSFRONT", SYMLINK+="gps/front", MODE="0666", GROUP="plugdev", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", KERNEL=="ttyACM*", ATTRS{idVendor}=="1546", ATTRS{idProduct}=="01a9", ATTRS{serial}=="GPSREAR",  SYMLINK+="gps/rear",  MODE="0666", GROUP="plugdev", ENV{ID_MM_DEVICE_IGNORE}="1"
