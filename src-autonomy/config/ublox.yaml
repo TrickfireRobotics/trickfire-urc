@@ -1,5 +1,7 @@
 # ublox_f9p.yaml
 /**:
   ros__parameters:
-    rate: 4.0
+    rate: 1.0
     nav_rate: 1
+    tmode3: 0
+    dynamic_model: automotive
