@@ -6,7 +6,19 @@ from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, LogI
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
+def gps(namespace, device): #makes gps node
+    return Node(
+        package="ublox_gps",
+        executable="ublox_gps_node",
+        name="ublox_gps_node",
+        namespace=namespace,
+        output="both",
+        respawn=True,
+        respawn_delay=2.0,
+        parameters=[LaunchConfiguration("gps_config"), {"device": device, "frame_id": namespace}],
+    )
 
 def generate_launch_description() -> LaunchDescription:
     launch_description = LaunchDescription(
@@ -26,6 +38,13 @@ def generate_launch_description() -> LaunchDescription:
                 default_value="zed",
                 description="Name used for the ZED namespace and TF frames.",
             ),
+            DeclareLaunchArgument(
+                "gps_config",
+                default_value="/src-autonomy/config/ublox_f9p.yaml",
+                description="Path to the ublox ZED-F9P parameter file.",
+            ),
+            gps("gps_front", "/dev/gps/front"),
+            gps("gps_rear",  "/dev/gps/rear"),
         ]
     )
 

@@ -99,6 +99,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-rosbridge-server \
     ros-jazzy-cv-bridge \
     ros-jazzy-vision-opencv \
+    ros-jazzy-ublox-gps \
     && rosdep init \
     && rm -rf /var/lib/apt/lists/*
 
@@ -130,7 +131,6 @@ RUN usermod --login trickfire --home /home/trickfire --move-home ubuntu \
 USER trickfire
 COPY --chown=trickfire:trickfire .devcontainer/trickfire.bashrc /home/trickfire/.bashrc
 WORKDIR /home/trickfire/trickfire-urc
-
 
 # ------------------------------------
 # Dev setup

@@ -1,0 +1,5 @@
+# ublox_f9p.yaml
+/**:
+  ros__parameters:
+    rate: 4.0
+    nav_rate: 1
