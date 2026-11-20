@@ -24,32 +24,32 @@ no_cache=false
 force_recreate=false
 
 while getopts 'anc' flag; do
-    case "$flag" in
-    a) attach_only=true ;;
-    n) no_cache=true ;;
-    c) force_recreate=true ;;
-    *)
-        echo "Usage: $0 [-a] [-n] [-c]" >&2
-        exit 1
-        ;;
-    esac
+	case "$flag" in
+	a) attach_only=true ;;
+	n) no_cache=true ;;
+	c) force_recreate=true ;;
+	*)
+		echo "Usage: $0 [-a] [-n] [-c]" >&2
+		exit 1
+		;;
+	esac
 done
 
 if [[ $attach_only == false ]]; then
-    log_info "Building '${service}' image"
-    if [[ $no_cache == true ]]; then
-        compose build --no-cache "$service"
-    else
-        compose build "$service"
-    fi
+	log_info "Building '${service}' image"
+	if [[ $no_cache == true ]]; then
+		compose build --no-cache "$service"
+	else
+		compose build "$service"
+	fi
 
-    log_info "Starting '${service}' container"
-    if [[ $force_recreate == true ]]; then
-        compose up -d --force-recreate "$service"
-    else
-        compose up -d "$service"
-    fi
-    log_success "Launch of '${service}' succeeded"
+	log_info "Starting '${service}' container"
+	if [[ $force_recreate == true ]]; then
+		compose up -d --force-recreate "$service"
+	else
+		compose up -d "$service"
+	fi
+	log_success "Launch of '${service}' succeeded"
 fi
 
 log_info "Connecting to '${service}' container"

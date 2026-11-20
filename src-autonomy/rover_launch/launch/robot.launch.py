@@ -8,7 +8,8 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-def gps(namespace, device): #makes gps node
+
+def gps(namespace, device):  # makes gps node
     return Node(
         package="ublox_gps",
         executable="ublox_gps_node",
@@ -19,6 +20,7 @@ def gps(namespace, device): #makes gps node
         respawn_delay=2.0,
         parameters=[LaunchConfiguration("gps_config"), {"device": device, "frame_id": namespace}],
     )
+
 
 def generate_launch_description() -> LaunchDescription:
     launch_description = LaunchDescription(
@@ -40,11 +42,11 @@ def generate_launch_description() -> LaunchDescription:
             ),
             DeclareLaunchArgument(
                 "gps_config",
-                default_value="/home/trickfire/trickfire-urc/src-autonomy/config/ublox_f9p.yaml",
+                default_value="~/trickfire-urc/src-autonomy/config/ublox.yaml",
                 description="Path to the ublox ZED-F9P parameter file.",
             ),
             gps("gps_front", "/dev/gps/front"),
-            gps("gps_rear",  "/dev/gps/rear"),
+            gps("gps_rear", "/dev/gps/rear"),
         ]
     )
 
