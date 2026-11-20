@@ -8,7 +8,6 @@ from enum import Enum
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
 from std_srvs.srv import Trigger
 from geometry_msgs.msg import PoseStamped
 
