@@ -52,6 +52,8 @@ services:
       - "/dev/bus/usb:/dev/bus/usb"
     device_cgroup_rules:
       - "c 189:* rmw"
+      - "c 166:* rmw"
+      - "c 188:* rmw"
     group_add:
       - "plugdev"
       - "dialout"
