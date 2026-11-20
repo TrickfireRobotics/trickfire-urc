@@ -1,3 +1,9 @@
+"""
+This file contains the RoverManagerNode and the RoverState enum. These classes are used to control
+the missions status of the rover. It will interface with mission control to get the goal for locations
+in the URC
+"""
+
 from enum import Enum
 
 import rclpy
