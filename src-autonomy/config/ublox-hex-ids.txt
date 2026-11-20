@@ -1,0 +1,9 @@
+Label, Serial Hex, Serial TXT
+A - 0x544e4f5246535047 - GPSFRONT
+B - 0x52414552535047 - GPSREAR
+
+udevadm info -q property -n /dev/ttyACM0 | grep ID_SERIAL
+ID_SERIAL=u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_GPSREAR
+ID_SERIAL_SHORT=GPSREAR
+ID_SERIAL=u-blox_AG_-_www.u-blox.com_u-blox_GNSS_receiver_GPSFRONT
+ID_SERIAL_SHORT=GPSFRONT
