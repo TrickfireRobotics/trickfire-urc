@@ -1,0 +1,66 @@
+---
+title: Camera Calibration
+description: Generate a camera calibration JSON file from checkerboard images for the AR tag detector.
+---
+
+### Overview
+
+The AR tag detector uses OpenCV's `solvePnP` routine, which requires a calibrated camera model. The
+calibration data is stored in a JSON file containing:
+
+- `camera_matrix`
+- `dist_coeffs`
+
+The project includes a calibration helper script at
+`src-platform/camera/camera/generate_camera_calibration.py`.
+
+### Requirements
+
+Collect several images of a checkerboard pattern from the same camera that will be used on the rover.
+The script expects the images to be stored in:
+
+```text
+src-platform/camera/camera/calibration_images/
+```
+
+The images should be `.jpg` files and should show the checkerboard from multiple angles and distances.
+
+### Generate the calibration file
+
+From the repository root, run:
+
+```bash
+python src-platform/camera/camera/generate_camera_calibration.py
+```
+
+The script:
+
+1. loads each checkerboard image in `calibration_images/`,
+2. finds the chessboard corners with OpenCV,
+3. calibrates the camera with `cv.calibrateCamera()`, and
+4. writes the result to:
+
+```text
+src-platform/camera/camera/camera_calibration.json
+```
+
+### Usage with the AR tag node
+
+Once the file has been generated, launch the detector with the calibration path explicitly provided:
+
+```bash
+ros2 run ar_tag_detection ar_tag_detection -- --camera-id 0 --calibration-file src-platform/camera/camera/camera_calibration.json
+```
+
+If the script is launched from the same directory as the JSON file, the tool can also use the default
+filename `camera_calibration.json`.
+
+<Callout type="info" title="Tip">
+A good calibration set is important for accurate pose estimation. If the checkerboard corners are not
+found in enough images, the script will print a warning and will not generate a calibration file.
+</Callout>
+
+### Related module
+
+The generated calibration file is consumed by the AR tag node documented in
+[AR Tag Detection](./ar-tag-detection).

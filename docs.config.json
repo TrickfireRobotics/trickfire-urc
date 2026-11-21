@@ -6,6 +6,15 @@
     "sidebar": [
         { "label": "Getting Started", "slug": "getting-started" },
         { "label": "Architecture", "slug": "architecture" },
+        {
+            "label": "Modules",
+            "items": [
+                { "label": "Camera", "slug": "deployment/camera" },
+                { "label": "Camera-Calibration", "slug": "modules/camera-calibration" },
+                { "label": "AR Tag detection", "slug": "modules/ar-tag-detection" },
+                { "label": "Object detection", "slug": "modules/object-detection" }
+            ]
+        },
         { "label": "Creating a Package", "slug": "creating-a-package" },
         { "label": "Building, Launching, and Testing", "slug": "building-and-testing" },
         { "label": "Connecting to the Simulator", "slug": "simulation" }

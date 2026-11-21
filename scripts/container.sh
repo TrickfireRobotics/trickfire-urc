@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 
 readonly log_prefix="TRICKFIRE DOCKER"
 readonly compose_file=".devcontainer/docker-compose.yml"
-readonly service="robot"
+readonly service="rover"
 
 readonly blue='\033[0;34m'
 readonly green='\033[0;32m'
@@ -53,4 +53,4 @@ if [[ $attach_only == false ]]; then
 fi
 
 log_info "Connecting to '${service}' container"
-exec compose exec "$service" /bin/bash
+exec docker compose -f "$compose_file" exec "$service" /bin/bash

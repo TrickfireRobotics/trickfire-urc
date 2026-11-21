@@ -1,0 +1,127 @@
+---
+title: AR Tag Detection Module
+description: Detect ArUco markers from compressed camera frames and publish tag IDs, corners, and poses.
+---
+
+### Description
+
+The AR tag detection module reads a compressed image stream, detects ArUco markers with OpenCV, and
+publishes the results to ROS 2 topics. It is designed to work with the camera module and a calibrated
+camera model.
+
+The implementation is in `src-autonomy/ar_tag_detection/ar_tag_detection/ar_tag_detection.py`.
+
+### Required inputs
+
+A valid camera stream must already be publishing on the ROS graph before the tag node is launched.
+By default, the node listens on:
+
+```text
+/camera_0/image/compressed
+```
+
+You can override the camera index with:
+
+```bash
+ros2 run ar_tag_detection ar_tag_detection -- --camera-id 2
+```
+
+For a non-default calibration file, pass:
+
+```bash
+ros2 run ar_tag_detection ar_tag_detection -- --camera-id 0 --calibration-file /path/to/camera_calibration.json
+```
+
+If no calibration file is provided, the code attempts to use `camera_calibration.json` from the current
+working directory.
+
+<Callout type="error" title="Calibration is required">
+The tag detector uses OpenCV's `cv.solvePnP` and therefore needs a valid camera calibration file that
+contains both `camera_matrix` and `dist_coeffs`.
+</Callout>
+
+### Published topics
+
+The detector builds all topic names under `/camera_{camera_id}/tags`.
+
+<Accordions>
+    <Accordion title="Annotated image">
+        `/camera_{camera_id}/tags` publishes the annotated frame with detected marker outlines drawn on it.
+    </Accordion>
+    <Accordion title="Detected IDs">
+        `/camera_{camera_id}/tags/ids` publishes a flattened `Int32MultiArray` with the detected tag IDs.
+    </Accordion>
+    <Accordion title="Marker corners">
+        `/camera_{camera_id}/tags/tag_corners` publishes each tag's four corners in the order top-left,
+        top-right, bottom-right, bottom-left.
+    </Accordion>
+    <Accordion title="Marker poses">
+        `/camera_{camera_id}/tags/tag_poses` publishes a `PoseArray` containing the 6-DoF pose of each detected
+        tag relative to the camera.
+    </Accordion>
+</Accordions>
+
+### Processing flow
+
+Each incoming compressed frame triggers `ArTagDetectionNode.frame_callback()`. That callback rate-limits
+processing with `process_rate_hz` and forwards the message to `TagDetectionLogic.feedFrame()`.
+
+`feedFrame()` does the following:
+
+1. Converts the compressed image to a BGR OpenCV image.
+2. Detects ArUco markers with `cv.aruco.ArucoDetector`.
+3. Draws markers on the frame.
+4. Flattens the detected IDs and corner arrays for publishing.
+5. Solves PnP for each tag to estimate its pose.
+6. Publishes the processed image, tag IDs, corners, and pose list.
+
+## Public functions
+
+### `TagDetectionLogic.feedFrame()`
+
+```python
+feedFrame(self, frame: CompressedImage) -> tuple[CompressedImage, Int32MultiArray, Int32MultiArray, list[Pose]]
+```
+
+This method accepts a compressed camera frame, detects markers, and returns:
+
+- the annotated compressed image,
+- an `Int32MultiArray` of tag IDs,
+- an `Int32MultiArray` of flattened corner coordinates,
+- a list of ROS `Pose` objects for each tag.
+
+### `ArTagDetectionNode.frame_callback()`
+
+```python
+frame_callback(self, msg: CompressedImage) -> None
+```
+
+This callback is triggered when a new frame arrives on the subscribed camera topic. It enforces the
+configured frame throttle and publishes the results to the configured tag topics.
+
+## Private helpers
+
+### `TagDetectionLogic._handleValidTagCorners()`
+
+```python
+_handleValidTagCorners(self, corners: np.ndarray) -> tuple[Point2D, Point2D, Point2D, Point2D]
+```
+
+This helper normalizes the raw OpenCV corner array to a consistent ordering:
+
+- top-left,
+- top-right,
+- bottom-right,
+- bottom-left.
+
+The output is converted to integer pixel coordinates for downstream publishing and visualization.
+
+### `TagDetectionLogic._rotationMatrixToQuaternion()`
+
+```python
+_rotationMatrixToQuaternion(self, matrix: np.ndarray) -> np.ndarray
+```
+
+Converts a 3x3 rotation matrix into a unit quaternion so the tag pose can be published as a ROS
+`Pose` message.
+----

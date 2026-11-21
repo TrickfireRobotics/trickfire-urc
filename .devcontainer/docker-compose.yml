@@ -33,7 +33,7 @@ services:
     tty: true
 
   # Jetson AGX Orin running JetPack 7.2 (L4T r39.2):
-  # docker compose -f .devcontainer/docker-compose.yml run --build --rm prod
+  # docker compose -f .devcontainer/docker-compose.yml run --build --rm rover
   # Camera device mounts depend on the camera model.
   rover:
     profiles: [rover]
