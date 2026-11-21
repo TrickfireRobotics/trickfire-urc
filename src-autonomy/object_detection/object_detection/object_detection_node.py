@@ -19,6 +19,9 @@ class ObjectDetectionNode(Node):
 
         # self.declare_parameter("image_topic", "/image_raw")
         self.declare_parameter("image_topic", "/zed/zed_node/rgb/color/rect/image")
+        self.declare_parameter(
+            "depth_image_topic", "zed/zed_node/rgb/depth/rect/image"
+        )  # TODO chnge
         self.declare_parameter("detections_topic", "/detections")
         self.declare_parameter("annotated_image_topic", "/image_annotated")
         self.declare_parameter("model_name", "yolo26n.pt")
@@ -29,6 +32,7 @@ class ObjectDetectionNode(Node):
         image_topic: str = str(self.get_parameter("image_topic").value)
         detections_topic: str = str(self.get_parameter("detections_topic").value)
         model_name: str = str(self.get_parameter("model_name").value)
+        depth_model_name: str = str(self.get_parameter("depth_model_name").value)
         annotated_image_topic: str = str(self.get_parameter("annotated_image_topic").value)
         model_task: str = str(self.get_parameter("model_task").value)
         self.inference_size = int(self.get_parameter("inference_size").value)
@@ -37,12 +41,20 @@ class ObjectDetectionNode(Node):
             get_package_share_directory("object_detection"), "models", model_name
         )
 
+        depth_model_path = os.path.join(
+            get_package_share_directory("object_detection"), "models", depth_model_name
+        )
+
         # Initialize CV Bridge
         self.bridge = CvBridge()
 
         self.get_logger().info(f"Loading YOLO model from {model_path}")
         self.model = YOLO(model=model_path, task=str(model_task), verbose=True)
         self.get_logger().info("YOLO model loaded successfully")
+
+        self.get_logger().info(f"Loading Depth YOLO model from {depth_model_path}")
+        self.depth_model = YOLO(model=depth_model_path, task="depth", verbose=True)
+        self.get_logger().info("Depth YOLO model loaded successfully. (NOT FINETUNED FOR NOW)")
 
         # Create subscriber and publishers
         image_qos = QoSProfile(
@@ -64,20 +76,24 @@ class ObjectDetectionNode(Node):
         try:
             # Convert ROS Image to OpenCV format
             cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+            ok, depth_image = rclpy.wait_for_message(Image, self, "POINT TO DEPTH TOPIC")
 
+            # Matrix of depths at each pixel coming from zed stereo camera or simulation.
+            cv_depth_image = self.bridge.imgmsg_to_cv2(depth_image, desired_encoding="passthrough")
             # Run YOLO detection
             results = self.model(cv_image, imgsz=self.inference_size, verbose=False)
+            # depth_results = self.depth_model(cv_image, imgsz=self.inference_size, verbose=False)
 
             # Create Detection2DArray message
             detection_array = Detection2DArray()
             detection_array.header = msg.header
-
+            # TODO get the depth of object detect in that box.
             # Process each detection
             for result in results:
                 boxes = result.boxes
                 for box in boxes:
                     detection = Detection2D()
-
+                    # TODO calculate the average distance for each box to get distance to box.
                     # Get bounding box coordinates (xyxy format)
                     x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
 
