@@ -15,6 +15,10 @@ install/
 log/
 build/
 
+*install*
+*log*
+*build*
+
 # lsp
 .cache/
 

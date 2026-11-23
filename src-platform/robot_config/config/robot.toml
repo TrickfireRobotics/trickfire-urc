@@ -1,0 +1,42 @@
+[robot]
+#Wheel diameter in mm
+wheel_diameter=200
+something_random="Some random bullshit"
+
+#Can values are placeholders right now until we start writing software for these
+
+[motors.front_left]
+can_id = 1
+motors_type = "ak_series"
+motors_mode = "servo"
+inverted = false
+
+
+[motors.front_right]
+can_id = 2
+motors_type = "ak_series"
+motors_mode = "servo"
+#Right side motor speed should be inverted
+inverted = true
+
+[motors.back_left]
+can_id = 3
+motors_type = "ak_series"
+motors_mode = "servo"
+inverted = false
+
+
+[motors.back_right]
+can_id = 4
+motors_type = "ak_series"
+motors_mode = "servo"
+inverted = true
+
+
+[motors.swivel_front_left]
+can_id = 4
+motors_type = "ak_series"
+motors_mode = "servo"
+inverted = true
+gear_ratio=9.0
+
